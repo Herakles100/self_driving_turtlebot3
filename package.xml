@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>aue_finals</name>
+  <version>0.0.0</version>
+  <description>The aue_finals package</description>
+
+  <maintainer email="nmadhok@g.clemson.edu">Nitin Madhok</maintainer>
+  <maintainer email="prakhag@g.clemson.edu">Prakhar Gupta</maintainer>
+  <maintainer email="rnguye2@g.clemson.edu">Ryan Nguyen</maintainer>
+  <maintainer email="shenglx@g.clemson.edu">Shengli Xu</maintainer>
+  <maintainer email="smallad@g.clemson.edu">Sreekar Malladi</maintainer>
+
+  <license>MIT</license>
+
+  <url type="repository">https://github.com/AuE893-Spring21-Team-2/aue_finals</url>
+
+  <author email="nmadhok@g.clemson.edu">Nitin Madhok</author>
+  <author email="prakhag@g.clemson.edu">Prakhar Gupta</author>
+  <author email="rnguye2@g.clemson.edu">Ryan Nguyen</author>
+  <author email="shenglx@g.clemson.edu">Shengli Xu</author>
+  <author email="smallad@g.clemson.edu">Sreekar Malladi</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>rospy</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_export_depend>geometry_msgs</build_export_depend>
+  <build_export_depend>rospy</build_export_depend>
+  <build_export_depend>sensor_msgs</build_export_depend>
+  <build_export_depend>std_msgs</build_export_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>rospy</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+
+  <export>
+    <!-- Other tools can request additional information be placed here -->
+  </export>
+</package>
