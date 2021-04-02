@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+import os
 import cv2
 import numpy as np
 import tensorflow as tf
@@ -7,19 +9,23 @@ from yolov3.yolov3_tf2.utils import draw_outputs
 
 
 def main():
+
+    # Get absolute base path for the folder containing the scripts
+    base_path = os.path.dirname(os.path.abspath(__file__))
+
     # Image to be detected
     img_raw = tf.image.decode_image(
-        open('./yolov3/data/stop_sign.jpg', 'rb').read(), channels=3)
+        open(os.path.join(base_path, 'yolov3/data/stop_sign.jpg'), 'rb').read(), channels=3)
 
     # Number of classes can be detected using tiny-yolo
     yolo = YoloV3Tiny()
 
     # Load trained weights for tiny-yolo
-    yolo.load_weights('./yolov3/checkpoints/yolov3-tiny.tf').expect_partial()
+    yolo.load_weights(os.path.join(base_path, 'yolov3/checkpoints/yolov3-tiny.tf')).expect_partial()
 
     # Load class names that can be detected
     class_names = [c.strip()
-                   for c in open('./yolov3/data/coco.names').readlines()]
+                   for c in open(os.path.join(base_path, 'yolov3/data/coco.names')).readlines()]
 
     # Preprocess the image
     img = tf.expand_dims(img_raw, 0)
