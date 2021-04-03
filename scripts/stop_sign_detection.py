@@ -25,7 +25,7 @@ class StopSignDetection:
         self.image_sub = rospy.Subscriber(
             "/camera/rgb/image_raw", Image, self.camera_callback)
 
-        # Publisher which will publish to the topic '/cmd_vel'.
+        # Publisher which will publish to the topic '/stop_sign'
         self.detection_pub = rospy.Publisher('/stop_sign',
                                              Float32MultiArray, queue_size=10)
 
@@ -51,7 +51,7 @@ class StopSignDetection:
         # Detect objects in the image
         boxes, scores, classes, nums = self.yolo(img)
 
-        # Loop through the detections
+        # Loop through detections
         for i in range(nums[0]):
             # Get the detected stop sign
             if 'stop sign' in self.class_names[int(classes[0][i])]:
@@ -68,17 +68,18 @@ class StopSignDetection:
         #######
         # The below part should move to the integrated script
         ######
-        # Draw the detection on the image
-        img = cv2.cvtColor(img_raw, cv2.COLOR_RGB2BGR)
-        wh = np.flip(img.shape[0:2])
-        x1y1 = tuple((np.array(boxes[0][i][0:2]) * wh).astype(np.int32))
-        x2y2 = tuple((np.array(boxes[0][i][2:4]) * wh).astype(np.int32))
-        img = cv2.rectangle(img, x1y1, x2y2, (255, 0, 0), 2)
-        img = cv2.putText(img, '{} {:.4f}'.format(self.class_names[int(
-            classes[0][i])], scores[0][i]), x1y1, cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
+        # Draw the detected stop sign on the image
+        if self.detection.data:
+            img = cv2.cvtColor(img_raw, cv2.COLOR_RGB2BGR)
+            wh = np.flip(img.shape[0:2])
+            x1y1 = tuple((np.array(boxes[0][i][0:2]) * wh).astype(np.int32))
+            x2y2 = tuple((np.array(boxes[0][i][2:4]) * wh).astype(np.int32))
+            img = cv2.rectangle(img, x1y1, x2y2, (255, 0, 0), 2)
+            img = cv2.putText(img, '{} {:.4f}'.format(self.class_names[int(
+                classes[0][i])], scores[0][i]), x1y1, cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
 
-        cv2.imshow("Detection", img)
-        cv2.waitKey(1)
+            cv2.imshow("Detection", img)
+            cv2.waitKey(1)
 
     def clean_up(self):
         cv2.destroyAllWindows()
