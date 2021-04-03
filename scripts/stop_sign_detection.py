@@ -26,12 +26,12 @@ class StopSignDetection:
             "/camera/rgb/image_raw", Image, self.camera_callback)
 
         # Publisher which will publish to the topic '/stop_sign'
-        self.detection_pub = rospy.Publisher('/stop_sign',
+        self.stop_sign_pub = rospy.Publisher('/stop_sign',
                                              Float32MultiArray, queue_size=10)
 
-        # Init the detection result
-        self.detection = Float32MultiArray()
-        self.detection.data = []
+        # Init the stop sign message
+        self.stop_sign_msg = Float32MultiArray()
+        self.stop_sign_msg.data = []
 
         # Init the publish rate
         self.rate = rospy.Rate(20)
@@ -55,21 +55,21 @@ class StopSignDetection:
         for i in range(nums[0]):
             # Get the detected stop sign
             if 'stop sign' in self.class_names[int(classes[0][i])]:
-                self.detection.data = [
+                self.stop_sign_msg.data = [
                     scores[0][i].numpy()] + boxes[0][i].numpy().tolist()
                 break
             else:
                 continue
 
         # Publish
-        self.detection_pub.publish(self.detection)
+        self.stop_sign_pub.publish(self.stop_sign_msg)
         self.rate.sleep()
 
         #######
         # The below part should move to the integrated script
         ######
         # Draw the detected stop sign on the image
-        if self.detection.data:
+        if self.stop_sign_msg.data:
             img = cv2.cvtColor(img_raw, cv2.COLOR_RGB2BGR)
             wh = np.flip(img.shape[0:2])
             x1y1 = tuple((np.array(boxes[0][i][0:2]) * wh).astype(np.int32))
