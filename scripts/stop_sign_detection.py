@@ -6,7 +6,7 @@ import numpy as np
 import rospy
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
-from std_msgs.msg import Float32MultiArray, Bool
+from std_msgs.msg import Float32MultiArray
 import tensorflow as tf
 
 from yolov3.yolov3_tf2.models import YoloV3Tiny
@@ -28,13 +28,10 @@ class StopSignDetection:
         # Publisher which will publish to the topic '/stop_sign'
         self.stop_sign_pub = rospy.Publisher('/stop_sign',
                                              Float32MultiArray, queue_size=10)
-        self.stop_sign_flag_pub = rospy.Publisher('/stop_sign_flag',
-                                             Bool, queue_size=10)
+
         # Init the stop sign message
         self.stop_sign_msg = Float32MultiArray()
         self.stop_sign_msg.data = []
-        self.stop_sign_detected = Bool()
-        self.stop_sign_detected.data = False
 
         # Init the publish rate
         self.rate = rospy.Rate(20)
@@ -54,40 +51,43 @@ class StopSignDetection:
         # Detect objects in the image
         boxes, scores, classes, nums = self.yolo(img)
 
+        stop_signs = []
         # Loop through detections
         for i in range(nums[0]):
             # Get the detected stop sign
             if 'stop sign' in self.class_names[int(classes[0][i])]:
-                self.stop_sign_msg.data = [
-                    scores[0][i].numpy()] + boxes[0][i].numpy().tolist()
-                if self.stop_sign_msg.data[3]*self.stop_sign_msg.data[4] > 0.5*0.4:
-                    self.stop_sign_detected.data=True
-                else:
-                    self.stop_sign_detected.data=False
-                break
+                # Get the probability of the detected stop sign
+                probability = scores[0][i].numpy()
+                # Convert the representation of the bounding box from proportion to pixel
+                wh = np.flip(img_raw.shape[0:2])
+                x1 = boxes[0][i][0].numpy() * wh[0]
+                y1 = boxes[0][i][1].numpy() * wh[1]
+                x2 = boxes[0][i][2].numpy() * wh[0]
+                y2 = boxes[0][i][3].numpy() * wh[1]
+                stop_signs.append([probability, x1, y1, x2, y2])
             else:
                 continue
 
+        if stop_signs:
+            # Select the largest stop sign which should be the closest one
+            index_largest_stop_sign = 0
+            area_largest_stop_sign = 0
+            for i, stop_sign in enumerate(stop_signs):
+                area = abs((stop_sign[0] - stop_sign[2])
+                           * (stop_sign[1] - stop_sign[3]))
+                if area >= area_largest_stop_sign:
+                    index_largest_stop_sign = i
+                    area_largest_stop_sign = area
+
+            # Selected stop sign
+            stop_sign = stop_signs[index_largest_stop_sign]
+
+            # Update the msg
+            self.stop_sign_msg.data = stop_sign + [area]
+
         # Publish
         self.stop_sign_pub.publish(self.stop_sign_msg)
-        self.stop_sign_flag_pub.publish(self.stop_sign_detected)
         self.rate.sleep()
-
-        #######
-        # The below part should move to the integrated script
-        ######
-        # Draw the detected stop sign on the image
-        if self.stop_sign_msg.data:
-            img = cv2.cvtColor(img_raw, cv2.COLOR_RGB2BGR)
-            wh = np.flip(img.shape[0:2])
-            x1y1 = tuple((np.array(boxes[0][i][0:2]) * wh).astype(np.int32))
-            x2y2 = tuple((np.array(boxes[0][i][2:4]) * wh).astype(np.int32))
-            img = cv2.rectangle(img, x1y1, x2y2, (255, 0, 0), 2)
-            img = cv2.putText(img, '{} {:.4f}'.format(self.class_names[int(
-                classes[0][i])], scores[0][i]), x1y1, cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
-
-            cv2.imshow("Detection", img)
-            cv2.waitKey(1)
 
     def clean_up(self):
         cv2.destroyAllWindows()
