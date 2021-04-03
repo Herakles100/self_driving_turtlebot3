@@ -60,18 +60,25 @@ class StopSignDetection:
             if 'stop sign' in self.class_names[int(classes[0][i])]:
                 self.detection.data = [
                     scores[0][i].numpy()] + boxes[0][i].numpy().tolist()
-                img = cv2.cvtColor(img_raw, cv2.COLOR_RGB2BGR)
-                img = draw_outputs(
-                    img, (boxes, scores, classes, nums), self.class_names)
-
-                # Convert the image to imgmsg
-                img_msg = CvBridge().cv2_to_imgmsg(img, 'bgr8')
 
                 # Publish
                 self.detection_pub.publish(self.detection)
-                self.image_pub.publish(img_msg)
                 self.rate.sleep()
 
+                #######
+                # The below part should move to the integrated script
+                ######
+                # Draw the detection on the image
+                img = cv2.cvtColor(img_raw, cv2.COLOR_RGB2BGR)
+                wh = np.flip(img.shape[0:2])
+                x1y1 = tuple(
+                    (np.array(boxes[0][i][0:2]) * wh).astype(np.int32))
+                x2y2 = tuple(
+                    (np.array(boxes[0][i][2:4]) * wh).astype(np.int32))
+                img = cv2.rectangle(img, x1y1, x2y2, (255, 0, 0), 2)
+                img = cv2.putText(img, '{} {:.4f}'.format(
+                    self.class_names[int(classes[0][i])], scores[0][i]),
+                    x1y1, cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
                 cv2.imshow("Detection", img)
                 cv2.waitKey(1)
 
