@@ -6,7 +6,7 @@ import numpy as np
 import rospy
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
-from std_msgs.msg import Float32MultiArray
+from std_msgs.msg import Float32MultiArray, Bool
 import tensorflow as tf
 
 from yolov3.yolov3_tf2.models import YoloV3Tiny
@@ -28,10 +28,13 @@ class StopSignDetection:
         # Publisher which will publish to the topic '/stop_sign'
         self.stop_sign_pub = rospy.Publisher('/stop_sign',
                                              Float32MultiArray, queue_size=10)
-
+        self.stop_sign_flag_pub = rospy.Publisher('/stop_sign_flag',
+                                             Bool, queue_size=10)
         # Init the stop sign message
         self.stop_sign_msg = Float32MultiArray()
         self.stop_sign_msg.data = []
+        self.stop_sign_detected = Bool()
+        self.stop_sign_detected.data = False
 
         # Init the publish rate
         self.rate = rospy.Rate(20)
@@ -57,12 +60,17 @@ class StopSignDetection:
             if 'stop sign' in self.class_names[int(classes[0][i])]:
                 self.stop_sign_msg.data = [
                     scores[0][i].numpy()] + boxes[0][i].numpy().tolist()
+                if self.stop_sign_msg.data[3]*self.stop_sign_msg.data[4] > 0.5*0.4:
+                    self.stop_sign_detected.data=True
+                else:
+                    self.stop_sign_detected.data=False
                 break
             else:
                 continue
 
         # Publish
         self.stop_sign_pub.publish(self.stop_sign_msg)
+        self.stop_sign_flag_pub.publish(self.stop_sign_detected)
         self.rate.sleep()
 
         #######
