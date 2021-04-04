@@ -45,7 +45,7 @@
   </node>
 
   <!-- Stop sign detection node -->
-  <node pkg="aue_finals" type="stop_sign_detection.py" name="stop_sign_detection" />
+  <node pkg="aue_finals" type="stop_sign_detection_cv.py" name="stop_sign_detection" />
 
   <!-- Task2 main controller -->
   <node pkg="aue_finals" type="task2_main_controller.py" name="task2_main_controller">

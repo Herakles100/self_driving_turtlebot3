@@ -25,9 +25,6 @@ class StopSignDetection:
         self.image_sub = rospy.Subscriber(
             "/camera/rgb/image_raw", Image, self.camera_callback)
 
-        # Publisher which will publish to the topic '/detected_img'
-        self.image_pub = rospy.Publisher('/detected_img', Image, queue_size=10)
-
         # Publisher which will publish to the topic '/stop_sign'
         self.stop_sign_pub = rospy.Publisher('/stop_sign',
                                              Float32MultiArray, queue_size=10)
@@ -87,16 +84,8 @@ class StopSignDetection:
             # Selected stop sign
             stop_sign = stop_signs[index_largest_stop_sign]
 
-            # Draw the detected stop sign
-            prob = stop_sign[0]
-            x1y1 = (int(stop_sign[1]), int(stop_sign[2]))
-            x2y2 = (int(stop_sign[3]), int(stop_sign[4]))
-            img_raw = cv2.rectangle(img_raw, x1y1, x2y2, (255, 0, 0), 2)
-            img_raw = cv2.putText(img_raw, 'stop sign {:.4f}'.format(
-                prob), x1y1, cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 0, 0), 2)
-
             # Update the msg
-            self.stop_sign_msg.data = stop_sign + [area]
+            self.stop_sign_msg.data = stop_sign + [area_largest_stop_sign]
 
         else:
             # Update the msg
@@ -104,8 +93,6 @@ class StopSignDetection:
 
         # Publish
         self.stop_sign_pub.publish(self.stop_sign_msg)
-        img_msg = self.bridge_object.cv2_to_imgmsg(img_raw, 'bgr8')
-        self.image_pub.publish(img_msg)
         self.rate.sleep()
 
 
