@@ -21,9 +21,9 @@ class NodeController:
         self.stop_sign_sub = rospy.Subscriber(
             "/stop_sign", Float32MultiArray, self.get_stop_sign_info)
 
-        # Subscriber which will get images from the topic 'camera/rgb/image_raw'
+        # Subscriber which will get images from the topic '/detected_img'
         self.image_sub = rospy.Subscriber(
-            "/camera/rgb/image_raw", Image, self.camera_callback)
+            "/detected_img", Image, self.camera_callback)
 
         # Publisher which will publish to the the topic '/cmd_vel'
         self.vel_pub = rospy.Publisher("/cmd_vel", Twist, queue_size=10)
@@ -82,14 +82,6 @@ class NodeController:
 
         # If the stop sign is detected
         if self.stop_sign_info:
-            # Draw the detected stop sign
-            prob = self.stop_sign_info[0]
-            x1y1 = (int(self.stop_sign_info[1]), int(self.stop_sign_info[2]))
-            x2y2 = (int(self.stop_sign_info[3]), int(self.stop_sign_info[4]))
-            cv_image = cv2.rectangle(cv_image, x1y1, x2y2, (255, 0, 0), 2)
-            cv_image = cv2.putText(cv_image, 'stop sign {:.4f}'.format(
-                prob), x1y1, cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
-
             # If the stop sign is close to the TurtleBot (the area is large enough)
             if self.stop_sign_info[-1] >= 7000:
                 self.is_stop_sign = True
