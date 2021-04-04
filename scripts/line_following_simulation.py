@@ -16,8 +16,10 @@ class LineFollower:
         self.bridge_object = CvBridge()
         self.image_sub = rospy.Subscriber(
             "/camera/rgb/image_raw", Image, self.camera_callback)
-        self.linefollow_pub = rospy.Publisher("line/cmd_vel", Twist, queue_size=10)
-
+        self.linefollow_pub = rospy.Publisher("/line_following", Float32MultiArray, queue_size=10)
+        self.line_following_msg = Float32MultiArray()
+        self.line_following_msg = []
+        
         self.moveTurtlebot3_object = MoveTurtleBot3()
 
         self.twist_object = Twist()
@@ -73,9 +75,11 @@ class LineFollower:
 
         try:
             cx = centers[most_left_centroid_index][0]
+            cy = centers[most_left_centroid_index][1]
             found_blob = True
         except:
-            cx = int(height/2)
+            cx = int(width/2)
+            cy = int(height/2)
             found_blob = False
 
         cv2.imshow("Original", cv_image)
@@ -90,7 +94,9 @@ class LineFollower:
         else:
             self.twist_object.angular.z = 0
 
-        self.linefollow_pub.publish(self.twist_object)
+        self.line_following_msg = [cx,cy,self.twist_object.angular.z]
+
+        self.linefollow_pub.publish(line_following_msg)
         # Make it start moving
         #self.moveTurtlebot3_object.move_robot(self.twist_object)
 
