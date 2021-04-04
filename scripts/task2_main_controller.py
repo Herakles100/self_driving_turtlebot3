@@ -95,7 +95,7 @@ class NodeController:
                 self.is_stop_sign = True
 
         if self.is_stop_sign:
-            # Keep moving for 10 seconds to ensure the TurtleBot is very close to the stop sign
+            # Keep moving for 15 seconds to ensure the TurtleBot is very close to the stop sign
             if self.timer1 == 0:
                 self.timer1 = rospy.Time.now().to_sec()
             elif rospy.Time.now().to_sec() - self.timer1 >= 15:
