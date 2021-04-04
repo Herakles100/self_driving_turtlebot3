@@ -31,6 +31,9 @@ class NodeController:
         # Init the velocity message
         self.vel_msg = Twist()
 
+        # Init the default linear speed
+        self.linear_x = rospy.get_param('~linear_x')
+
         # Init the method to move the TurtleBot
         self.moveTurtlebot3_object = MoveTurtleBot3()
 
@@ -41,15 +44,23 @@ class NodeController:
         self.stop_sign_info = []
 
         # Init the timer
-        self.timer = 0
+        self.timer1 = 0
+        self.timer2 = 0
 
-    def get_line_msg(self, msg):
+        # Init a flag
+        self.is_stop_sign = False
+
+    def get_line_info(self, msg):
         if msg.data:
             self.line_info = msg.data
+        else:
+            self.line_info = []
 
     def get_stop_sign_info(self, msg):
         if msg.data:
             self.stop_sign_info = msg.data
+        else:
+            self.stop_sign_info = []
 
     def camera_callback(self, msg):
         # Select bgr8 because its the OpneCV encoding by default
@@ -57,15 +68,14 @@ class NodeController:
             msg, desired_encoding="bgr8")
 
         # Init the default velocity
-        self.vel_msg.linear.x = 0.2
+        self.vel_msg.linear.x = self.linear_x
         self.vel_msg.angular.z = 0
 
         # If the line is detected, publish the angular velocity determined by the line-following algorithm
         if self.line_info:
             # Draw the center of detected line
-            height, *_ = cv_image.shape
-            x_center = int(self.line_info[0] + height / 2 + 50)
-            y_center = int(self.line_info[0])
+            x_center = int(self.line_info[0])
+            y_center = int(self.line_info[1])
             cv2.circle(cv_image, (x_center, y_center), 10, (0, 0, 255), -1)
 
             self.vel_msg.angular.z = self.line_info[-1]
@@ -81,18 +91,27 @@ class NodeController:
                 prob), x1y1, cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
 
             # If the stop sign is close to the TurtleBot (the area is large enough)
-            if self.stop_sign_info[-1] >= 3500:
-                # Stop the TurtleBot and start counting down
-                if self.timer == 0 or rospy.Time.now().to_sec() - self.timer < 3:
-                    self.timer = rospy.Time.now().to_sec()
+            if self.stop_sign_info[-1] >= 7000:
+                self.is_stop_sign = True
+
+        if self.is_stop_sign:
+            # Keep moving for 10 seconds to ensure the TurtleBot is very close to the stop sign
+            if self.timer1 == 0:
+                self.timer1 = rospy.Time.now().to_sec()
+            elif rospy.Time.now().to_sec() - self.timer1 >= 15:
+                # Stop the TurtleBot for 3 seconds
+                if self.timer2 == 0:
+                    self.timer2 = rospy.Time.now().to_sec()
                     self.vel_msg.angular.z = 0
                     self.vel_msg.linear.x = 0
-                # Start to move after stopping for 3 seconds
-                elif rospy.Time.now().to_sec() - self.timer >= 3:
-                    pass
-                # Start to detect the stop sign after 6 seconds
-                elif rospy.Time.now().to_sec() - self.timer >= 6:
-                    self.timer = 0
+                elif rospy.Time.now().to_sec() - self.timer2 < 3:
+                    self.vel_msg.angular.z = 0
+                    self.vel_msg.linear.x = 0
+                else:
+                    self.timer1 = 0
+                    self.timer2 = 0
+                    # Start to move
+                    self.is_stop_sign = False
 
         # Move the TurtleBot
         self.moveTurtlebot3_object.move_robot(self.vel_msg)
@@ -109,7 +128,7 @@ class NodeController:
 def main():
     rospy.init_node('main_node', anonymous=True)
     node_controller_object = NodeController()
-    rate = rospy.Rate(5)
+    rate = rospy.Rate(10)
     ctrl_c = False
 
     def shutdownhook():

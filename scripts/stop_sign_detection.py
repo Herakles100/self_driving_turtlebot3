@@ -31,10 +31,9 @@ class StopSignDetection:
 
         # Init the stop sign message
         self.stop_sign_msg = Float32MultiArray()
-        self.stop_sign_msg.data = []
 
         # Init the publish rate
-        self.rate = rospy.Rate(20)
+        self.rate = rospy.Rate(10)
 
         # Init the YoloV3 model
         self.yolo = yolo
@@ -84,13 +83,15 @@ class StopSignDetection:
 
             # Update the msg
             self.stop_sign_msg.data = stop_sign + [area]
-
-        # Publish
-        self.stop_sign_pub.publish(self.stop_sign_msg)
-        self.rate.sleep()
-
-    def clean_up(self):
-        cv2.destroyAllWindows()
+            # Publish
+            self.stop_sign_pub.publish(self.stop_sign_msg)
+            self.rate.sleep()
+        else:
+            # Update the msg
+            self.stop_sign_msg.data = []
+            # Publish
+            self.stop_sign_pub.publish(self.stop_sign_msg)
+            self.rate.sleep()
 
 
 def main():
@@ -113,7 +114,6 @@ def main():
 
     def shutdownhook():
         # Works better than rospy.is_shutdown()
-        detection_object.clean_up()
         rospy.loginfo("Shutdown time!")
         ctrl_c = True
 
