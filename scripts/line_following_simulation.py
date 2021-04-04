@@ -96,7 +96,7 @@ class LineFollower:
 
         self.line_following_msg = [cx,cy,self.twist_object.angular.z]
 
-        self.linefollow_pub.publish(line_following_msg)
+        self.linefollow_pub.publish(self.line_following_msg)
         # Make it start moving
         #self.moveTurtlebot3_object.move_robot(self.twist_object)
 
