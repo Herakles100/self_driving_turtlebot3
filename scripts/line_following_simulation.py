@@ -87,7 +87,7 @@ class LineFollower:
 def main():
     rospy.init_node('line_following_node', anonymous=True)
     line_follower_object = LineFollower()
-    rate = rospy.Rate(5)
+    rate = rospy.Rate(10)
     ctrl_c = False
 
     def shutdownhook():

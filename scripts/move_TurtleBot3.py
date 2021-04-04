@@ -22,9 +22,9 @@ class MoveTurtleBot3:
         AY = twist1.angular.y == twist2.angular.y
         AZ = twist1.angular.z == twist2.angular.z
         equal = LX and LY and LZ and AX and AY and AZ
-        if not equal:
-            rospy.logwarn(
-                "The Current Twist is not the same as the one sent, Resending")
+        # if not equal:
+        #     rospy.logwarn(
+        #         "The Current Twist is not the same as the one sent, Resending")
         return equal
 
     def move_robot(self, twist_object):

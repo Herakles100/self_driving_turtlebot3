@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 
+import cv2
 import numpy as np
 import rospy
 from cv_bridge import CvBridge
@@ -23,6 +24,9 @@ class StopSignDetection:
         # Subscriber which will get images from the topic 'camera/rgb/image_raw'
         self.image_sub = rospy.Subscriber(
             "/camera/rgb/image_raw", Image, self.camera_callback)
+
+        # Publisher which will publish to the topic '/detected_img'
+        self.image_pub = rospy.Publisher('/detected_img', Image, queue_size=10)
 
         # Publisher which will publish to the topic '/stop_sign'
         self.stop_sign_pub = rospy.Publisher('/stop_sign',
@@ -48,6 +52,9 @@ class StopSignDetection:
 
         # Detect objects in the image
         boxes, scores, classes, nums = self.yolo(img)
+
+        # Convert the img to BGR
+        img_raw = cv2.cvtColor(img_raw, cv2.COLOR_RGB2BGR)
 
         stop_signs = []
         # Loop through detections
@@ -80,17 +87,26 @@ class StopSignDetection:
             # Selected stop sign
             stop_sign = stop_signs[index_largest_stop_sign]
 
+            # Draw the detected stop sign
+            prob = stop_sign[0]
+            x1y1 = (int(stop_sign[1]), int(stop_sign[2]))
+            x2y2 = (int(stop_sign[3]), int(stop_sign[4]))
+            img_raw = cv2.rectangle(img_raw, x1y1, x2y2, (255, 0, 0), 2)
+            img_raw = cv2.putText(img_raw, 'stop sign {:.4f}'.format(
+                prob), x1y1, cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 0, 0), 2)
+
             # Update the msg
             self.stop_sign_msg.data = stop_sign + [area]
-            # Publish
-            self.stop_sign_pub.publish(self.stop_sign_msg)
-            self.rate.sleep()
+
         else:
             # Update the msg
             self.stop_sign_msg.data = []
-            # Publish
-            self.stop_sign_pub.publish(self.stop_sign_msg)
-            self.rate.sleep()
+
+        # Publish
+        self.stop_sign_pub.publish(self.stop_sign_msg)
+        img_msg = self.bridge_object.cv2_to_imgmsg(img_raw, 'bgr8')
+        self.image_pub.publish(img_msg)
+        self.rate.sleep()
 
 
 def main():
@@ -108,7 +124,7 @@ def main():
         os.path.join(base_path, 'yolov3/data/coco.names')).readlines()]
 
     detection_object = StopSignDetection(yolo, class_names)
-    rate = rospy.Rate(5)
+    rate = rospy.Rate(10)
     ctrl_c = False
 
     def shutdownhook():
