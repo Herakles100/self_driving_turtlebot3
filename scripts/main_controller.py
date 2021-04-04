@@ -110,18 +110,11 @@ class NodeController:
                 y_center = int(self.line_info[1])
                 cv2.circle(cv_image, (x_center, y_center), 10, (0, 0, 255), -1)
 
+                # Get the angular velocity publushed by line-follower node
                 self.vel_msg.angular.z = self.line_info[-1]
 
             # If the stop sign is detected
             if self.stop_sign_info:
-                # Draw the detected stop sign
-                prob = self.stop_sign_info[0]
-                x1y1 = (int(self.stop_sign_info[1]), int(self.stop_sign_info[2]))
-                x2y2 = (int(self.stop_sign_info[3]), int(self.stop_sign_info[4]))
-                cv_image = cv2.rectangle(cv_image, x1y1, x2y2, (255, 0, 0), 2)
-                cv_image = cv2.putText(cv_image, 'stop sign {:.4f}'.format(
-                    prob), x1y1, cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
-
                 # If the stop sign is close to the TurtleBot (the area is large enough)
                 if self.stop_sign_info[-1] >= 7000:
                     self.is_stop_sign = True
@@ -153,6 +146,7 @@ class NodeController:
             cv2.waitKey(1)
 
         elif self.mode ==3:
+            # This is april tag following scenario
             .. to do.. april tag
             continue
 
