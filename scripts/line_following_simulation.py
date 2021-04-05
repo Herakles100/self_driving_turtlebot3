@@ -21,6 +21,9 @@ class LineFollower:
         self.line_following_pub = rospy.Publisher(
             "/line_following", Float32MultiArray, queue_size=10)
 
+        self.line_detect_pub = rospy.Publisher("/detect/line", Int8, queue_size=10)
+        self.line_detect_msg = Int8()
+
         # Init the publish rate
         self.rate = rospy.Rate(10)
 
@@ -73,8 +76,10 @@ class LineFollower:
             # Update the msg
             self.line_following_msg.data = [
                 cx, cy + height / 2 + upper_bound, angular_vel]
+            self.line_detect_msg.data = 1
             # Publish
             self.line_following_pub.publish(self.line_following_msg)
+            self.line_detect_pub.publish(self.line_detect_msg)
             self.rate.sleep()
         else:
             # Update the msg
