@@ -47,7 +47,7 @@
   </node>
 
   <!-- Stop sign detection node -->
-  <node pkg="aue_finals" type="stop_sign_detection.py" name="stop_sign_detection" />
+  <node pkg="aue_finals" type="stop_sign_detection_cv.py" name="stop_sign_detection" />
 
   <!-- Obstacle Avoidance node -->
   <!--<node pkg="aue_finals" type="obstacle_avoidance.py" name="obst_wall_simulation" />-->
@@ -56,7 +56,7 @@
   <!--<node pkg="aue_finals" type="tag_following.py" name="tag_following" />-->
 
   <!-- Line detection node -->
-  <node pkg="aue_finals" type="line_following_simulation.py" name="line_following_simulation" />
+  <node pkg="aue_finals" type="line_detection.py" name="line_detection" />
 
   <!-- Main controller -->
   <node pkg="aue_finals" type="main_controller.py" name="main_controller">
