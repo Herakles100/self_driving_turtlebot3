@@ -1,0 +1,55 @@
+<launch>
+  <arg name="model" default="$(env TURTLEBOT3_MODEL)" doc="model type [burger, waffle, waffle_pi]"/>
+
+  <!-- Init pose -->
+  <arg name="x_pos" default="-0.2"/>
+  <arg name="y_pos" default="-1.6"/>
+  <arg name="z_pos" default="0"/>
+  <arg name="yaw_pos" default="3.14"/>
+
+  <!-- PID controller parameters -->
+  <arg name="Kp" default="0.2"/>
+  <arg name="Ki" default="0.008"/>
+  <arg name="Kd" default="0.2" />
+
+  <!-- Line color -->
+  <arg name="lower_HSV" default="[20, 100, 100]" />
+  <arg name="upper_HSV" default="[50, 255, 255]" />
+
+  <!-- Default linear speed -->
+  <arg name="linear_x" default="0.05"/>
+
+  <!-- Load world -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find aue_finals)/worlds/turtlebot3_final.world"/>
+    <arg name="paused" value="false"/>
+    <arg name="use_sim_time" value="true"/>
+    <arg name="gui" value="true"/>
+    <arg name="headless" value="false"/>
+    <arg name="debug" value="false"/>
+  </include>
+
+  <!-- Load Burger description -->
+  <param name="robot_description" command="$(find xacro)/xacro --inorder $(find turtlebot3_description)/urdf/turtlebot3_$(arg model).urdf.xacro" />
+
+  <!-- Load Gazebo -->
+  <node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf" args="-urdf -model turtlebot3_$(arg model) -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos) -param robot_description" />
+
+  <!-- Line following node -->
+  <node pkg="aue_finals" type="line_following_simulation.py" name="line_following_simulation">
+    <param name="Kp" value="$(arg Kp)"/>
+    <param name="Ki" value="$(arg Ki)"/>
+    <param name="Kd" value="$(arg Kd)" />
+    <param name="lower_HSV" value="$(arg lower_HSV)" />
+    <param name="upper_HSV" value="$(arg upper_HSV)" />
+  </node>
+
+  <!-- Stop sign detection node -->
+  <node pkg="aue_finals" type="stop_sign_detection_cv.py" name="stop_sign_detection" />
+
+  <!-- Task2 main controller -->
+  <node pkg="aue_finals" type="task2_main_controller.py" name="task2_main_controller">
+    <param name="linear_x" value="$(arg linear_x)" />
+  </node>
+
+</launch>
