@@ -4,7 +4,8 @@ import rospy
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import Twist
-from std_msgs.msg import Float32MultiArray, Int8
+from std_msgs.msg import Float32MultiArray
+#from std_msgs.msg import Int8
 
 from move_TurtleBot3 import MoveTurtleBot3
 
@@ -26,11 +27,6 @@ class NodeController:
             "/camera/rgb/image_raw", Image, self.camera_callback)
 
         """
-        # Subscriber which will get mode info from "/detect/"
-        # detect/line/ publishes "1" only if line is within a threshold
-        self.line_detect_sub = rospy.Subscriber(
-            "/detect/line", Int8, self.mode_decider)
-
         # Subscriber which will get mode info from "/detect/"
         # detect/tag/ publishes "1" only if tag is in sight
         self.tag_detect_sub = rospy.Subscriber(
@@ -68,7 +64,7 @@ class NodeController:
         # Init a flag
         self.is_stop_sign = False
 
-    def mode_decider(self,msg):     
+    def mode_decider(self):     
         if self.line_info and self.tag_info: 
             self.mode = 2           #line following until no line detected
             return
@@ -93,6 +89,9 @@ class NodeController:
             self.stop_sign_info = []
 
     def camera_callback(self, msg):
+        # Decide mode
+        self.mode_decider()
+
         # Select bgr8 because its the OpneCV encoding by default
         cv_image = self.bridge_object.imgmsg_to_cv2(
             msg, desired_encoding="bgr8")
