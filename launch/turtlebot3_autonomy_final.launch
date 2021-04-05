@@ -84,6 +84,5 @@
   <!-- Task 1 - Wall Following and Obstacle Avoidance -->
   <node pkg="aue_finals" type="obstacle_avoidance.py" name="obstacle_avoidance">
   </node>
-  
-</launch>
 
+</launch>

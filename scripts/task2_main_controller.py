@@ -83,22 +83,21 @@ class NodeController:
         # If the stop sign is detected
         if self.stop_sign_info:
             # Draw the detected stop sign
-            prob = self.stop_sign_info[0]
             x1y1 = (int(self.stop_sign_info[1]), int(self.stop_sign_info[2]))
             x2y2 = (int(self.stop_sign_info[3]), int(self.stop_sign_info[4]))
             cv_image = cv2.rectangle(cv_image, x1y1, x2y2, (255, 0, 0), 2)
-            cv_image = cv2.putText(cv_image, 'stop sign {:.4f}'.format(
-                prob), x1y1, cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
 
             # If the stop sign is close to the TurtleBot (the area is large enough)
-            if self.stop_sign_info[-1] >= 7000:
+            # Change the threshold to 7000 if using stop_sign_detection_yolo
+            if self.stop_sign_info[-1] >= 3300:
                 self.is_stop_sign = True
 
         if self.is_stop_sign:
-            # Keep moving for 15 seconds to ensure the TurtleBot is very close to the stop sign
+            # Keep moving for 18 seconds to ensure the TurtleBot is very close to the stop sign
             if self.timer1 == 0:
                 self.timer1 = rospy.Time.now().to_sec()
-            elif rospy.Time.now().to_sec() - self.timer1 >= 15:
+            # Change the threshold to 14 if using stop_sign_detection_yolo
+            elif rospy.Time.now().to_sec() - self.timer1 >= 18:
                 # Stop the TurtleBot for 3 seconds
                 if self.timer2 == 0:
                     self.timer2 = rospy.Time.now().to_sec()
