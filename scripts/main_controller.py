@@ -25,6 +25,7 @@ class NodeController:
         self.image_sub = rospy.Subscriber(
             "/camera/rgb/image_raw", Image, self.camera_callback)
 
+        """
         # Subscriber which will get mode info from "/detect/"
         # detect/line/ publishes "1" only if line is within a threshold
         self.line_detect_sub = rospy.Subscriber(
@@ -34,6 +35,7 @@ class NodeController:
         # detect/tag/ publishes "1" only if tag is in sight
         self.tag_detect_sub = rospy.Subscriber(
             "/detect/tag", Int8, self.mode_decider)
+        """
 
         # Publisher which will publish to the the topic '/cmd_vel'
         self.vel_pub = rospy.Publisher("/cmd_vel", Twist, queue_size=10)
@@ -53,6 +55,9 @@ class NodeController:
         # Init the stop sign information
         self.stop_sign_info = []
 
+        # Init the tag information
+        self.tag_info = []
+
         # Init the timer
         self.timer1 = 0
         self.timer2 = 0
@@ -64,13 +69,13 @@ class NodeController:
         self.is_stop_sign = False
 
     def mode_decider(self,msg):     
-        if self.line_detect_sub==1 & self.tag_detect_sub==1: 
+        if self.line_info and self.tag_info: 
             self.mode = 2           #line following until no line detected
             return
-        if self.line_detect_sub==1: #line following
+        if self.line_info: #line following
             self.mode = 2
             return
-        if self.tag_detect_sub==1: 
+        if self.tag_info: 
             self.mode = 3           #tag following
             return
         self.mode = 1 # if no mode being published, default to obstacle and wall mode
@@ -96,10 +101,9 @@ class NodeController:
         self.vel_msg.linear.x = self.linear_x
         self.vel_msg.angular.z = 0
 
-        if self.mode == 1: 
-        # this is Obstacle avoidance scanrio
-            ..to do ...
-            continue
+        if self.mode == 1:
+            """TO DO OBSTACLE AVOIDANCE"""
+            pass
 
         elif self.mode == 2:
         # This is line following scenario
@@ -115,15 +119,23 @@ class NodeController:
 
             # If the stop sign is detected
             if self.stop_sign_info:
-                # If the stop sign is close to the TurtleBot (the area is large enough)
-                if self.stop_sign_info[-1] >= 7000:
-                    self.is_stop_sign = True
 
+                # Draw the detected stop sign
+                x1y1 = (int(self.stop_sign_info[1]), int(self.stop_sign_info[2]))
+                x2y2 = (int(self.stop_sign_info[3]), int(self.stop_sign_info[4]))
+                cv_image = cv2.rectangle(cv_image, x1y1, x2y2, (255, 0, 0), 2)
+    
+                # If the stop sign is close to the TurtleBot (the area is large enough)
+                # Change the threshold to 7000 if using stop_sign_detection_yolo
+                if self.stop_sign_info[-1] >= 3300:
+                    self.is_stop_sign = True
+    
             if self.is_stop_sign:
-                # Keep moving for 15 seconds to ensure the TurtleBot is very close to the stop sign
+                # Keep moving for 18 seconds to ensure the TurtleBot is very close to the stop sign
                 if self.timer1 == 0:
                     self.timer1 = rospy.Time.now().to_sec()
-                elif rospy.Time.now().to_sec() - self.timer1 >= 15:
+                # Change the threshold to 14 if using stop_sign_detection_yolo
+                elif rospy.Time.now().to_sec() - self.timer1 >= 18:
                     # Stop the TurtleBot for 3 seconds
                     if self.timer2 == 0:
                         self.timer2 = rospy.Time.now().to_sec()
@@ -138,17 +150,16 @@ class NodeController:
                         # Start to move
                         self.is_stop_sign = False
 
-            # Move the TurtleBot
-            self.moveTurtlebot3_object.move_robot(self.vel_msg)
-
-            # Show the captured image
-            cv2.imshow("Camera", cv_image)
-            cv2.waitKey(1)
-
         elif self.mode ==3:
-            # This is april tag following scenario
-            .. to do.. april tag
-            continue
+            """ This is april tag following scenario """
+            pass
+
+        # Move the TurtleBot
+        self.moveTurtlebot3_object.move_robot(self.vel_msg)
+
+        # Show the captured image
+        cv2.imshow("Camera", cv_image)
+        cv2.waitKey(1)
 
 
     def clean_up(self):

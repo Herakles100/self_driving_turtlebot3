@@ -5,7 +5,8 @@
 
   <!-- Init pose -->
   <arg name="x_pos" default="-0.2"/>
-  <arg name="y_pos" default="1.6"/>
+  <arg name="y_pos" default="-1.6"/>
+  <!--<arg name="y_pos" default="1.6"/>-->
   <arg name="z_pos" default="0"/>  
   <arg name="yaw_pos" default="3.14"/>
 
@@ -34,11 +35,15 @@
   <!-- Load Burger description -->
   <param name="robot_description" command="$(find xacro)/xacro --inorder $(find turtlebot3_description)/urdf/turtlebot3_$(arg model).urdf.xacro" />
 
+  <!--<include file="$(find turtlebot3_bringup)/launch/includes/description.launch.xml">
+    <arg name="model" value="$(arg model)" />
+  </include>-->
+
   <!-- Load Gazebo -->
   <node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf" args="-urdf -model turtlebot3_$(arg model) -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos) -param robot_description" />
 
-  <!-- Line following node -->
-  <node pkg="aue_finals" type="line_following_simulation.py" name="line_following_simulation">
+  <!-- Line Detection node -->
+  <node pkg="aue_finals" type="line_detection.py" name="line_detection">
     <param name="Kp" value="$(arg Kp)"/>
     <param name="Ki" value="$(arg Ki)"/>
     <param name="Kd" value="$(arg Kd)" />
@@ -50,39 +55,14 @@
   <node pkg="aue_finals" type="stop_sign_detection_cv.py" name="stop_sign_detection" />
 
   <!-- Obstacle Avoidance node -->
-  <!--<node pkg="aue_finals" type="obstacle_avoidance.py" name="obst_wall_simulation" />-->
+  <!--<node pkg="aue_finals" type="obstacle_avoidance.py" name="obstacle_avoidance" />-->
 
   <!-- april tag detection node -->
   <!--<node pkg="aue_finals" type="tag_following.py" name="tag_following" />-->
 
-  <!-- Line detection node -->
-  <node pkg="aue_finals" type="line_detection.py" name="line_detection" />
-
   <!-- Main controller -->
   <node pkg="aue_finals" type="main_controller.py" name="main_controller">
     <param name="linear_x" value="$(arg linear_x)" />
-  </node>
-
-
-  <!--<include file="$(find person_sim)/launch/init_small_standing_person.launch">
-  </include>-->
-
-  <!--<include file="$(find turtle_tf_3d)/launch/person_standing_keyboard_move.launch">
-  </include>-->
-
-  <!--<include file="$(find turtlebot3_bringup)/launch/includes/description.launch.xml">
-    <arg name="model" value="$(arg model)" />
-  </include>-->
-
-  <!--<node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
-    <param name="publish_frequency" type="double" value="50.0" />
-    <param name="tf_prefix" value="$(arg multi_robot_name)"/>
-  </node>-->
-
-  <!--<node name="rviz" pkg="rviz" type="rviz" args="-d $(find turtlebot3_gazebo)/rviz/turtlebot3_gazebo_model.rviz"/>-->
-
-  <!-- Task 1 - Wall Following and Obstacle Avoidance -->
-  <node pkg="aue_finals" type="obstacle_avoidance.py" name="obstacle_avoidance">
   </node>
 
 </launch>
