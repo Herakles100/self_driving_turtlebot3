@@ -7,13 +7,6 @@
   <arg name="z_pos" default="0"/>
   <arg name="yaw_pos" default="3.14"/>
 
-  <arg name="model" default="$(env TURTLEBOT3_MODEL)" doc="model type [burger, waffle, waffle_pi]"/>
-  <arg name="multi_robot_name" default="leader"/>
-  <arg name="x_pos" default="-0.2"/>
-  <arg name="y_pos" default="1.6"/>
-  <arg name="z_pos" default="0"/>  
-  <arg name="yaw_pos" default="3.14"/>
-
   <!-- PID controller parameters -->
   <arg name="Kp" default="0.2"/>
   <arg name="Ki" default="0.008"/>
