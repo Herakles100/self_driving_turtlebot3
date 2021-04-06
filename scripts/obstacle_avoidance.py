@@ -28,72 +28,39 @@ class TurtleBot:
         self.vel_msg = Float32MultiArray()
 
         # Default velocity
-        self.linear_x = rospy.get_param('~linear_x')
-        self.angular_z = -1
+        self.default_linear_x = rospy.get_param('~linear_x')
+        self.default_angular_z = 0
 
         # Init the publish rate
         self.rate = rospy.Rate(10)
 
-        # Init distance reading
-        self.current_distance = [100] * 360
+        # Init the minimum distance between turtlebot and obstacle
+        self.threshold = 0.5
 
-    def laser_callback(self, laser_data):
-        # Update only if the incoming range data is within the limits
-        for i, dist in enumerate(laser_data.ranges):
-            if laser_data.range_min < dist < laser_data.range_max:
-                self.current_distance[i] = dist
+    def laser_callback(self, msg):
+        # Minimum distance of each direction
+        front = min(min(msg.ranges[-15:-1] + msg.ranges[:15]), 10)
+        fleft = min(min(msg.ranges[-45:-15]), 10)
+        fright = min(min(msg.ranges[15:45]), 10)
 
-        self.publish_velocity()
-
-    def mean(self, sector):
-        """ Take average """
-        sum = 0
-        for dist in sector:
-            sum += dist
-
-        return sum/len(sector)
-
-    def direction_control(self):
-        # Segmenting the laser data
-        # straight ahead
-        fwd = self.current_distance[0]
-
-        # forward view:
-        ahead = self.current_distance[-30:-1] + self.current_distance[:30]
-
-        # Left view:
-        left = self.current_distance[-60:-30]
-
-        # Right view:
-        right = self.current_distance[30:60]
-
-        # Take average
-        ahead_mean = self.mean(ahead)
-        left_mean = self.mean(left)
-        right_mean = self.mean(right)
-
-        # Setting up the Proportional gain values:
-        K_left = left_mean/(ahead_mean+right_mean)
-        K_right = right_mean/(ahead_mean+left_mean)
-        K_ahead = fwd
-
-        # Checking the distance from obstacles and
-        # controlling speeds accordingly
-        if ahead_mean > .05:
-            angular_z = K_left*self.angular_z - K_right*self.angular_z
-            linear_x = K_ahead*self.linear_x
+        if front >= self.threshold:
+            linear_x = 0.1
+            # Setting up the Proportional gain values:
+            K_left = fleft / (front + fright)
+            K_right = fright / (front + fleft)
+            angular_z = (K_right - K_left) * 1.5
         else:
-            angular_z = K_left*self.angular_z - K_right*self.angular_z
-            linear_x = 0
+            linear_x = 0.05
+            if fleft < self.threshold and fright < self.threshold:
+                angular_z = 0
+            else:
+                # Setting up the Proportional gain values:
+                K_left = fleft / (front + fright)
+                K_right = fright / (front + fleft)
+                angular_z = (K_right - K_left) * 1.1
 
-        return [linear_x, angular_z]
-
-    def publish_velocity(self):
-        # Keep moving till the robot sees an obstacle at
-        # less than safe distance
-        self.vel_msg.data = self.direction_control()
-
-        # Publishing our vel_msg
+        # Publishing vel_msg to topic "/velocity"
+        self.vel_msg.data = [linear_x, angular_z]
         self.vel_pub.publish(self.vel_msg)
 
         # Publish at the desired rate.
