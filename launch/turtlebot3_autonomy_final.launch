@@ -5,8 +5,7 @@
 
   <!-- Init pose -->
   <arg name="x_pos" default="-0.2"/>
-  <arg name="y_pos" default="-1.6"/>
-  <!--<arg name="y_pos" default="1.6"/>-->
+  <arg name="y_pos" default="1.6"/>
   <arg name="z_pos" default="0"/>  
   <arg name="yaw_pos" default="3.14"/>
 
@@ -42,6 +41,11 @@
   <!-- Load Gazebo -->
   <node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf" args="-urdf -model turtlebot3_$(arg model) -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos) -param robot_description" />
 
+  <!-- Obstacle Avoidance node -->
+  <node pkg="aue_finals" type="obstacle_avoidance.py" name="obstacle_avoidance">
+    <param name="linear_x" value="$(arg linear_x)" />
+  </node>
+
   <!-- Line Detection node -->
   <node pkg="aue_finals" type="line_detection.py" name="line_detection">
     <param name="Kp" value="$(arg Kp)"/>
@@ -53,9 +57,6 @@
 
   <!-- Stop sign detection node -->
   <node pkg="aue_finals" type="stop_sign_detection_cv.py" name="stop_sign_detection" />
-
-  <!-- Obstacle Avoidance node -->
-  <!--<node pkg="aue_finals" type="obstacle_avoidance.py" name="obstacle_avoidance" />-->
 
   <!-- april tag detection node -->
   <!--<node pkg="aue_finals" type="tag_following.py" name="tag_following" />-->

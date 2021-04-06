@@ -22,7 +22,7 @@ class NodeController:
         self.stop_sign_sub = rospy.Subscriber(
             "/stop_sign", Float32MultiArray, self.get_stop_sign_info)
 
-        # Subscriber which will get images from the topic 'camera/rgb/image_raw'
+        # Subscriber which will get images from the topic '/camera/rgb/image_raw'
         self.image_sub = rospy.Subscriber(
             "/camera/rgb/image_raw", Image, self.camera_callback)
 
@@ -33,8 +33,9 @@ class NodeController:
             "/detect/tag", Int8, self.mode_decider)
         """
 
-        # Publisher which will publish to the the topic '/cmd_vel'
-        self.vel_pub = rospy.Publisher("/cmd_vel", Twist, queue_size=10)
+        # Subscriber which will get velocity from the topic '/velocity'
+        self.vel_sub = rospy.Subscriber(
+            "/velocity", Float32MultiArray, self.get_velocity_info)
 
         # Init the velocity message
         self.vel_msg = Twist()
@@ -51,12 +52,16 @@ class NodeController:
         # Init the stop sign information
         self.stop_sign_info = []
 
+        # Init the velocity information
+        self.velocity_info = [self.linear_x, 0]
+
         # Init the tag information
         self.tag_info = []
 
         # Init the timer
         self.timer1 = 0
         self.timer2 = 0
+        self.mode_timer = 0
 
         # Init mode
         self.mode = 1   #Default to obstacle avoidance and wall following
@@ -88,9 +93,16 @@ class NodeController:
         else:
             self.stop_sign_info = []
 
+    def get_velocity_info(self, msg):
+        self.velocity_info = msg.data
+
     def camera_callback(self, msg):
-        # Decide mode
-        self.mode_decider()
+        if self.mode_timer == 0:
+            self.mode_timer = rospy.Time.now().to_sec()
+        elif rospy.Time.now().to_sec() - self.mode_timer >= 2:
+            # Decide mode
+            self.mode_decider()
+            self.mode_timer = 0
 
         # Select bgr8 because its the OpneCV encoding by default
         cv_image = self.bridge_object.imgmsg_to_cv2(
@@ -101,8 +113,8 @@ class NodeController:
         self.vel_msg.angular.z = 0
 
         if self.mode == 1:
-            """TO DO OBSTACLE AVOIDANCE"""
-            pass
+            self.vel_msg.linear.x = self.velocity_info[0]
+            self.vel_msg.angular.z = self.velocity_info[1]
 
         elif self.mode == 2:
         # This is line following scenario
@@ -149,7 +161,7 @@ class NodeController:
                         # Start to move
                         self.is_stop_sign = False
 
-        elif self.mode ==3:
+        elif self.mode == 3:
             """ This is april tag following scenario """
             pass
 
