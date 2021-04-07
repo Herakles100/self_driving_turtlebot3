@@ -1,7 +1,7 @@
 <launch>
   <arg name="model" default="$(env TURTLEBOT3_MODEL)" doc="model type [burger, waffle, waffle_pi]"/>
 
-  <arg name="tb3" default="/"/>
+  <arg name="tb3" default="tb3"/>
   <arg name="tb3_1" default="tb3_leader"/>
 
   <!-- Init pose -->
@@ -26,7 +26,7 @@
 
   <group ns = "$(arg tb3_1)">
     <!-- Load Burger description -->
-    <param name="robot_description" command="$(find xacro)/xacro --inorder $(find turtlebot3_description)/urdf/turtlebot3_$(arg model).urdf.xacro" />
+    <param name="robot_description" command="$(find xacro)/xacro --inorder $(find aue_finals)/urdf/turtlebot3_$(arg model)_leader.urdf.xacro" />
 
     <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
       <param name="publish_frequency" type="double" value="50.0" />
