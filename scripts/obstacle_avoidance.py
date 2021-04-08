@@ -28,66 +28,68 @@ class TurtleBot:
         self.vel_msg = Float32MultiArray()
 
         # Default velocity
-        # self.default_linear_x = rospy.get_param('~linear_x')
-        self.linear_x = 0.1
+        self.linear_x = rospy.get_param('~linear_x')
+        self.angular_z = -1
 
         # Init the publish rate
         self.rate = rospy.Rate(10)
 
-        # Init minimum distance in each direction
-        self.front = 0
-        self.fleft = 0
-        self.fright = 0
+        # Init distance reading
+        self.current_distance = [100] * 360
 
-        # Init the minimum distance between turtlebot and obstacle
-        self.front_threshold = 0.2
-        self.left_threshold = 0.1
-        self.right_threshold = 0.15
+    def laser_callback(self, laser_data):
+        # Update only if the incoming range data is within the limits
+        for i, dist in enumerate(laser_data.ranges):
+            if laser_data.range_min < dist < laser_data.range_max:
+                self.current_distance[i] = dist
 
-        # Init action space
-        self.actions = {
-            'dynamic_steering': [self.linear_x, 0],
-            'move_straight': [self.linear_x, 0],
-            'turn_left': [0, -0.1],
-            'turn_right': [0, 0.1],
-            'stop': [0, 0]
-        }
+        self.publish_velocity()
 
-    def _cal_angular_z(self):
-        K_left = self.fleft / (self.front + self.fright)
-        K_right = self.fright / (self.front + self.fleft)
-        angular_z = (K_right - K_left) * 1.5
+    def mean(self, sector):
+        """ Take average """
+        sum = 0
+        for dist in sector:
+            sum += dist
 
-        return angular_z
+        return sum/len(sector)
 
-    def laser_callback(self, msg):
-        # Minimum distance in each direction
-        self.front = min(min(msg.ranges[-15:-1] + msg.ranges[:15]), 10)
-        self.fleft = min(min(msg.ranges[-90:-15]), 10)
-        self.fright = min(min(msg.ranges[15:90]), 10)
+    def direction_control(self):
+        # Segmenting the laser data
+        # straight ahead
+        fwd = self.current_distance[0]
+        # forward view:
+        ahead = self.current_distance[-30:-1] + self.current_distance[:30]
+        # Left view:
+        left = self.current_distance[-60:-30]
+        # Right view:
+        right = self.current_distance[30:60]
 
-        if self.front > self.front_threshold:
-            if self.fleft > self.left_threshold and self.fright > self.right_threshold:
-                self.actions['dynamic_steering'][-1] = self._cal_angular_z()
-                action = 'dynamic_steering'
-            elif self.fleft > self.left_threshold and self.fright < self.right_threshold:
-                action = 'turn_left'
-            elif self.fleft < self.left_threshold and self.fright > self.right_threshold:
-                action = 'turn_right'
-            else:
-                action = 'move_straight'
+        # Take average
+        ahead_mean = self.mean(ahead)
+        left_mean = self.mean(left)
+        right_mean = self.mean(right)
+
+        # Setting up the Proportional gain values:
+        K_left = left_mean / (ahead_mean + right_mean)
+        K_right = right_mean / (ahead_mean + left_mean)
+        K_ahead = fwd
+
+        # Checking the distance from obstacles and
+        # controlling speeds accordingly
+        angular_z = K_left * self.angular_z - K_right * self.angular_z
+        if ahead_mean > .05:
+            linear_x = K_ahead * self.linear_x
         else:
-            if self.fleft > self.left_threshold and self.fright > self.right_threshold:
-                action = 'turn_left'
-            elif self.fleft > self.left_threshold and self.fright < self.right_threshold:
-                action = 'turn_left'
-            elif self.fleft < self.left_threshold and self.fright > self.right_threshold:
-                action = 'turn_right'
-            else:
-                action = 'stop'
+            linear_x = 0
 
-        # Publishing vel_msg to topic "/velocity"
-        self.vel_msg.data = self.actions[action]
+        return [linear_x, angular_z]
+
+    def publish_velocity(self):
+        # Keep moving till the robot sees an obstacle at
+        # less than safe distance
+        self.vel_msg.data = self.direction_control()
+
+        # Publishing our vel_msg
         self.vel_pub.publish(self.vel_msg)
 
         # Publish at the desired rate.

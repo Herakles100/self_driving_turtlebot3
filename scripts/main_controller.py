@@ -64,22 +64,29 @@ class NodeController:
         self.mode_timer = 0
 
         # Init mode
-        self.mode = 1   #Default to obstacle avoidance and wall following
+        self.mode = 1  # Default to obstacle avoidance and wall following
 
         # Init a flag
         self.is_stop_sign = False
 
-    def mode_decider(self):     
-        if self.line_info and self.tag_info: 
-            self.mode = 2           #line following until no line detected
+        # Init modes
+        self.modes = {
+            1: 'obstacle avoidance',
+            2: 'line following',
+            3: 'tag following'
+        }
+
+    def mode_decider(self):
+        if self.line_info and self.tag_info:
+            self.mode = 2  # line following until no line detected
             return
-        if self.line_info: #line following
+        if self.line_info:  # line following
             self.mode = 2
             return
-        if self.tag_info: 
-            self.mode = 3           #tag following
+        if self.tag_info:
+            self.mode = 3  # tag following
             return
-        self.mode = 1 # if no mode being published, default to obstacle and wall mode
+        self.mode = 1  # if no mode being published, default to obstacle and wall mode
 
     def get_line_info(self, msg):
         if msg.data:
@@ -99,7 +106,7 @@ class NodeController:
     def camera_callback(self, msg):
         if self.mode_timer == 0:
             self.mode_timer = rospy.Time.now().to_sec()
-        elif rospy.Time.now().to_sec() - self.mode_timer >= 2:
+        elif rospy.Time.now().to_sec() - self.mode_timer >= 1:
             # Decide mode
             self.mode_decider()
             self.mode_timer = 0
@@ -107,7 +114,12 @@ class NodeController:
         # Select bgr8 because its the OpneCV encoding by default
         cv_image = self.bridge_object.imgmsg_to_cv2(
             msg, desired_encoding="bgr8")
-        
+
+        # Print mode information on the camera video
+        cv_image = cv2.putText(cv_image, 'Mode: ' + self.modes[self.mode],
+                               (15, 15), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1,
+                               (0, 0, 255), 1)
+
         # Init the default velocity
         self.vel_msg.linear.x = self.linear_x
         self.vel_msg.angular.z = 0
@@ -117,7 +129,7 @@ class NodeController:
             self.vel_msg.angular.z = self.velocity_info[1]
 
         elif self.mode == 2:
-        # This is line following scenario
+            # This is line following scenario
             # If the line is detected, publish the angular velocity determined by the line-following algorithm
             if self.line_info:
                 # Draw the center of detected line
@@ -130,17 +142,18 @@ class NodeController:
 
             # If the stop sign is detected
             if self.stop_sign_info:
-
                 # Draw the detected stop sign
-                x1y1 = (int(self.stop_sign_info[1]), int(self.stop_sign_info[2]))
-                x2y2 = (int(self.stop_sign_info[3]), int(self.stop_sign_info[4]))
+                x1y1 = (int(self.stop_sign_info[1]), int(
+                    self.stop_sign_info[2]))
+                x2y2 = (int(self.stop_sign_info[3]), int(
+                    self.stop_sign_info[4]))
                 cv_image = cv2.rectangle(cv_image, x1y1, x2y2, (255, 0, 0), 2)
-    
+
                 # If the stop sign is close to the TurtleBot (the area is large enough)
                 # Change the threshold to 7000 if using stop_sign_detection_yolo
                 if self.stop_sign_info[-1] >= 3300:
                     self.is_stop_sign = True
-    
+
             if self.is_stop_sign:
                 # Keep moving for 18 seconds to ensure the TurtleBot is very close to the stop sign
                 if self.timer1 == 0:
@@ -171,7 +184,6 @@ class NodeController:
         # Show the captured image
         cv2.imshow("Camera", cv_image)
         cv2.waitKey(1)
-
 
     def clean_up(self):
         self.moveTurtlebot3_object.clean_class()
