@@ -28,39 +28,66 @@ class TurtleBot:
         self.vel_msg = Float32MultiArray()
 
         # Default velocity
-        self.default_linear_x = rospy.get_param('~linear_x')
-        self.default_angular_z = 0
+        # self.default_linear_x = rospy.get_param('~linear_x')
+        self.linear_x = 0.1
 
         # Init the publish rate
         self.rate = rospy.Rate(10)
 
+        # Init minimum distance in each direction
+        self.front = 0
+        self.fleft = 0
+        self.fright = 0
+
         # Init the minimum distance between turtlebot and obstacle
-        self.threshold = 0.5
+        self.front_threshold = 0.2
+        self.left_threshold = 0.1
+        self.right_threshold = 0.15
+
+        # Init action space
+        self.actions = {
+            'dynamic_steering': [self.linear_x, 0],
+            'move_straight': [self.linear_x, 0],
+            'turn_left': [0, -0.1],
+            'turn_right': [0, 0.1],
+            'stop': [0, 0]
+        }
+
+    def _cal_angular_z(self):
+        K_left = self.fleft / (self.front + self.fright)
+        K_right = self.fright / (self.front + self.fleft)
+        angular_z = (K_right - K_left) * 1.5
+
+        return angular_z
 
     def laser_callback(self, msg):
-        # Minimum distance of each direction
-        front = min(min(msg.ranges[-15:-1] + msg.ranges[:15]), 10)
-        fleft = min(min(msg.ranges[-45:-15]), 10)
-        fright = min(min(msg.ranges[15:45]), 10)
+        # Minimum distance in each direction
+        self.front = min(min(msg.ranges[-15:-1] + msg.ranges[:15]), 10)
+        self.fleft = min(min(msg.ranges[-90:-15]), 10)
+        self.fright = min(min(msg.ranges[15:90]), 10)
 
-        if front >= self.threshold:
-            linear_x = 0.1
-            # Setting up the Proportional gain values:
-            K_left = fleft / (front + fright)
-            K_right = fright / (front + fleft)
-            angular_z = (K_right - K_left) * 1.5
-        else:
-            linear_x = 0.05
-            if fleft < self.threshold and fright < self.threshold:
-                angular_z = 0
+        if self.front > self.front_threshold:
+            if self.fleft > self.left_threshold and self.fright > self.right_threshold:
+                self.actions['dynamic_steering'][-1] = self._cal_angular_z()
+                action = 'dynamic_steering'
+            elif self.fleft > self.left_threshold and self.fright < self.right_threshold:
+                action = 'turn_left'
+            elif self.fleft < self.left_threshold and self.fright > self.right_threshold:
+                action = 'turn_right'
             else:
-                # Setting up the Proportional gain values:
-                K_left = fleft / (front + fright)
-                K_right = fright / (front + fleft)
-                angular_z = (K_right - K_left) * 1.1
+                action = 'move_straight'
+        else:
+            if self.fleft > self.left_threshold and self.fright > self.right_threshold:
+                action = 'turn_left'
+            elif self.fleft > self.left_threshold and self.fright < self.right_threshold:
+                action = 'turn_left'
+            elif self.fleft < self.left_threshold and self.fright > self.right_threshold:
+                action = 'turn_right'
+            else:
+                action = 'stop'
 
         # Publishing vel_msg to topic "/velocity"
-        self.vel_msg.data = [linear_x, angular_z]
+        self.vel_msg.data = self.actions[action]
         self.vel_pub.publish(self.vel_msg)
 
         # Publish at the desired rate.
