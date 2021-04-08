@@ -35,7 +35,6 @@
  
     <!-- Load Gazebo -->   
     <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-urdf -model $(arg tb3_1) -x $(arg tb3_1_x_pos) -y $(arg tb3_1_y_pos) -z $(arg tb3_1_z_pos) -Y $(arg tb3_1_yaw_pos) -param robot_description" />
-
   </group>
 
   <group ns = "$(arg tb3)">
@@ -74,5 +73,11 @@
     <param name="publish_tag_detections_image" type="bool" value="true" />      <!-- default: false -->
   </node>
 
+  <!-- April tag follower node -->
+  <node pkg="aue_finals" type="april_tag_tracking_sim.py" name="april_tag_tracking_sim">
+    <param name="Kp" value="$(arg Kp)"/>
+    <param name="Ki" value="$(arg Ki)"/>
+    <param name="Kd" value="$(arg Kd)" />
+  </node>
 
 </launch>

@@ -20,7 +20,7 @@ class TagFollower:
     def __init__(self):
         self.bridge_object = CvBridge()
         self.image_sub = rospy.Subscriber(
-            "/raspicam_node/image/compressed", Image, self.camera_callback)
+            "/tb3/camera/rgb/Image_raw", Image, self.camera_callback)
         self.listener = tf.TransformListener()
         self.moveTurtlebot3_object = MoveTurtleBot3()
         self.twist_object = Twist()
