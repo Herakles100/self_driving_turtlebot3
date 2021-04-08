@@ -1,0 +1,69 @@
+# # Definitions of tags to detect
+#
+# ## General remarks
+#
+# - All length in meters
+# - Ellipsis (...) signifies that the previous element can be repeated multiple times.
+#
+# ## Standalone tag definitions
+# ### Remarks
+#
+# - name is optional
+#
+# ### Syntax
+#
+# standalone_tags:
+#   [
+#     {id: ID, size: SIZE, name: NAME},
+#     ...
+#   ]
+standalone_tags:
+  [
+
+    {id: 0, size: 0.06},
+    {id: 1, size: 0.06},
+    {id: 2, size: 0.06},
+    {id: 3, size: 0.06},
+    {id: 4, size: 0.06},
+    {id: 5, size: 0.06}
+  ]
+# ## Tag bundle definitions
+# ### Remarks
+#
+# - name is optional
+# - x, y, z have default values of 0 thus they are optional
+# - qw has default value of 1 and qx, qy, qz have default values of 0 thus they are optional
+#
+# ### Syntax
+#
+
+tag_bundles:
+  [
+    {
+      name: 'my_bundle',
+      layout:
+        [
+          {id: 1, size: 0.06, x: 0.0000, y: 0.0000, z: 0.0000, qw: 1.0000, qx: 0.0000, qy: 0.0000, qz: 0.0000},
+          {id: 3, size: 0.06, x: -0.1044, y: -0.0677, z: 0.0594, qw: 0.9986, qx: 0.0131, qy: 0.0466, qz: -0.0192},
+          {id: 4, size: 0.06, x: -0.0102, y: -0.0787, z: 0.0341, qw: 0.9992, qx: -0.0305, qy: 0.0210, qz: -0.0130},
+          {id: 2, size: 0.06, x: 0.0922, y: -0.0012, z: -0.0027, qw: 0.9992, qx: -0.0224, qy: -0.0317, qz: 0.0049},
+          {id: 0, size: 0.06, x: -0.0948, y: 0.0067, z: 0.0195, qw: 0.9468, qx: -0.2807, qy: -0.1570, qz: -0.0075},
+          {id: 5, size: 0.06, x: 0.0794, y: -0.0794, z: 0.0351, qw: 0.9992, qx: -0.0403, qy: -0.0060, qz: -0.0039}
+        ]
+    }
+  ]
+# tag_bundles:
+#   [
+#     {
+#       name: 'CUSTOM_BUNDLE_NAME',
+#       layout:
+#         [
+#           {id: ID, size: SIZE, x: X_POS, y: Y_POS, z: Z_POS, qw: QUAT_W_VAL, qx: QUAT_X_VAL, qy: QUAT_Y_VAL, qz: QUAT_Z_VAL},
+#           ...
+#         ]
+#     },
+#     ...
+#   ]
+tag_bundles:
+  [
+  ]

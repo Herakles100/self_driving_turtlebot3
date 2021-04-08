@@ -32,10 +32,14 @@
 
   <gazebo reference="Apriltag36_11_00000">
     <material>
-      <script>Gazebo/Apriltag36_11_00000</script>
+      <script>
+        <uri>model://Apriltag36_11_00000/materials/scripts</uri>
+        <uri>model://Apriltag36_11_00000/materials/textures</uri>
+        <name>Apriltag36_11_00000</name>
+      </script>
     </material>
   </gazebo>
-          
+        
 
   <gazebo reference="caster_back_link">
     <mu1>0.1</mu1>
