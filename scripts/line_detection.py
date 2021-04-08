@@ -68,9 +68,8 @@ class LineFollower:
         # PID Controller
         if found_blob:
             # Determine the angular velocity
-            error = cx - width / 2
-            angular_vel = self.pid_object.update(
-                error + self.center_shift) / 450
+            error = cx - width / 2 + self.center_shift
+            angular_vel = self.pid_object.update(error) / 450
 
             # Update the msg
             self.line_following_msg.data = [
