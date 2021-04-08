@@ -57,13 +57,10 @@ class TurtleBot:
         # Segmenting the laser data
         # straight ahead
         fwd = self.current_distance[0]
-
         # forward view:
         ahead = self.current_distance[-30:-1] + self.current_distance[:30]
-
         # Left view:
         left = self.current_distance[-60:-30]
-
         # Right view:
         right = self.current_distance[30:60]
 
@@ -73,17 +70,16 @@ class TurtleBot:
         right_mean = self.mean(right)
 
         # Setting up the Proportional gain values:
-        K_left = left_mean/(ahead_mean+right_mean)
-        K_right = right_mean/(ahead_mean+left_mean)
+        K_left = left_mean / (ahead_mean + right_mean)
+        K_right = right_mean / (ahead_mean + left_mean)
         K_ahead = fwd
 
         # Checking the distance from obstacles and
         # controlling speeds accordingly
+        angular_z = K_left * self.angular_z - K_right * self.angular_z
         if ahead_mean > .05:
-            angular_z = K_left*self.angular_z - K_right*self.angular_z
-            linear_x = K_ahead*self.linear_x
+            linear_x = K_ahead * self.linear_x
         else:
-            angular_z = K_left*self.angular_z - K_right*self.angular_z
             linear_x = 0
 
         return [linear_x, angular_z]
