@@ -5,9 +5,9 @@ from geometry_msgs.msg import Twist
 
 class MoveTurtleBot3:
     def __init__(self):
-        self.cmd_vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+        self.cmd_vel_pub = rospy.Publisher('/tb3/cmd_vel', Twist, queue_size=10)
         self.cmd_vel_subs = rospy.Subscriber(
-            '/cmd_vel', Twist, self.cmdvel_callback)
+            '/tb3/cmd_vel', Twist, self.cmdvel_callback)
         self.last_cmdvel_command = Twist()
         self._cmdvel_pub_rate = rospy.Rate(10)
 

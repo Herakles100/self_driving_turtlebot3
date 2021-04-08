@@ -10,20 +10,31 @@ import tf
 import geometry_msgs.msg
 from cv_bridge import CvBridge
 from sensor_msgs.msg import CompressedImage as Image
+from std_msgs.msg import Float32MultiArray
 from geometry_msgs.msg import Twist
-
 from move_TurtleBot3 import MoveTurtleBot3
 from PID_controller import PID
-
+from apriltag_ros.msg import AprilTagDetectionArray
 
 class TagFollower:
     def __init__(self):
         self.bridge_object = CvBridge()
+        
         self.image_sub = rospy.Subscriber(
-            "/tb3/camera/rgb/Image_raw", Image, self.camera_callback)
+            "tb3/camera/rgb/image_raw/compressed", Image, self.camera_callback)
+        self.tagdetect_sub = rospy.Subscriber(
+            "/tag_detections", AprilTagDetectionArray, self.detect_callback)
+        
+        self.tag_follow_pub = rospy.Publisher("/tag_follow_instruction",Float32MultiArray, queue_size=10)
+        # Init the line-following message
+        self.tag_follow_msg = Float32MultiArray()
+
         self.listener = tf.TransformListener()
         self.moveTurtlebot3_object = MoveTurtleBot3()
         self.twist_object = Twist()
+
+        # Init detected_tag value
+        self.detected_tag = False
 
         # Init PID controller
         Kp = rospy.get_param('~Kp')
@@ -33,25 +44,45 @@ class TagFollower:
 
     def tf_follow(self):
         detector=apriltag.Detector()
+
+    def detect_callback(self,msg):
+        if len(msg.detections) > 0:
+            self.detected_tag = True
+        else:
+            self.detected_tag = False
     
-    def camera_callback(self, data):
-        # Select bgr8 because its the OpneCV encoding by default
-        cv_np_arr = np.fromstring(data.data, np.uint8)
-        cv_image = cv2.imdecode(cv_np_arr, cv2.IMREAD_COLOR)
-        height, width,_= cv_image.shape
-        cv2.imshow("Original", cv_image)
-        cv2.waitKey(1)
+    def camera_callback(self,data):
+        if self.detected_tag:
+            # If a tag is detected
+            # get the X position of the tag_id of concern wrt camera frame
+            trans,rot=self.listener.lookupTransform('tag_0', 'camera', rospy.Time(0))
+            cx=trans[0]
+            cz=trans[2]
 
-        # get the X position of the tag_id of concern wrt camera frame
-        trans,rot=self.listener.lookupTransform('tag_1', 'camera', rospy.Time(0))
-        cx=trans[0]
+            # PID Controller
+            # Move  only if tag is more than 0.3 units ahead
+            if cz>0.3:
+                self.twist_object.linear.x = 0.05
+                # Controlling the angular velocity
+                error_x = -cx*100
+                self.twist_object.angular.z = self.pid_object.update(error_x) / 200
+            else:
+                #If a tag is detected at less than 0.3 units
+                self.twist_object.linear.x = 0
+                self.twist_object.angular.z = 0
 
-        # PID Controller
-        self.twist_object.linear.x = 0.05
-        error = -cx*100     # Negative sign is for sign convention of frame coordinates
-
-        self.twist_object.angular.z = self.pid_object.update(error) / 200
-        self.moveTurtlebot3_object.move_robot(self.twist_object)
+            # Publish the velocity data to /tag_follow_instruction
+            self.tag_follow_msg.data = [self.twist_object.linear.x, self.twist_object.angular.z]
+            self.tag_follow_pub.publish(self.tag_follow_msg)
+            self.moveTurtlebot3_object.move_robot(self.twist_object)
+        else:
+            # If no tag found, rotate in place
+            self.twist_object.linear.x = 0
+            self.twist_object.angular.z = 0.05           
+            # Publish the velocity data to /tag_follow_instruction
+            self.tag_follow_msg.data = [self.twist_object.linear.x, self.twist_object.angular.z]
+            self.tag_follow_pub.publish(self.tag_follow_msg)
+            self.moveTurtlebot3_object.move_robot(self.twist_object)
 
     def clean_up(self):
         self.moveTurtlebot3_object.clean_class()
