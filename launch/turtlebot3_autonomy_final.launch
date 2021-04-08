@@ -18,6 +18,9 @@
   <arg name="lower_HSV" default="[20, 100, 100]" />
   <arg name="upper_HSV" default="[50, 255, 255]" />
 
+  <!-- Line center shift -->
+  <arg name="line_center_shift" default="50" />
+
   <!-- Default linear speed -->
   <arg name="linear_x" default="0.05"/>
 
@@ -53,6 +56,7 @@
     <param name="Kd" value="$(arg Kd)" />
     <param name="lower_HSV" value="$(arg lower_HSV)" />
     <param name="upper_HSV" value="$(arg upper_HSV)" />
+    <param name="line_center_shift" value="$(arg line_center_shift)" />
   </node>
 
   <!-- Stop sign detection node -->
