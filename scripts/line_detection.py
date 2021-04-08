@@ -33,6 +33,9 @@ class LineFollower:
         Kd = rospy.get_param('~Kd')
         self.pid_object = PID(Kp, Ki, Kd)
 
+        # Center shift
+        self.center_shift = rospy.get_param('~line_center_shift')
+
         # Init the lower bound and upper bound of the specific color
         self.lower_HSV = np.array(eval(rospy.get_param('~lower_HSV')))
         self.upper_HSV = np.array(eval(rospy.get_param('~upper_HSV')))
@@ -58,8 +61,6 @@ class LineFollower:
         m = cv2.moments(mask, False)
         try:
             cx, cy = int(m['m10']/m['m00']), int(m['m01']/m['m00'])
-            cv2.circle(mask, (cx, cy), 10, (0, 0, 255), -1)
-            cv2.circle(cv_image, (cx, cy), 10, (0, 0, 255), -1)
             found_blob = True
         except ZeroDivisionError:
             found_blob = False
@@ -68,7 +69,8 @@ class LineFollower:
         if found_blob:
             # Determine the angular velocity
             error = cx - width / 2
-            angular_vel = self.pid_object.update(error) / 450
+            angular_vel = self.pid_object.update(
+                error + self.center_shift) / 450
 
             # Update the msg
             self.line_following_msg.data = [
