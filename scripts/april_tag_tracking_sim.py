@@ -12,7 +12,7 @@ from cv_bridge import CvBridge
 from sensor_msgs.msg import CompressedImage as Image
 from std_msgs.msg import Float32MultiArray
 from geometry_msgs.msg import Twist
-from move_TurtleBot3 import MoveTurtleBot3
+#from move_TurtleBot3 import MoveTurtleBot3
 from PID_controller import PID
 from apriltag_ros.msg import AprilTagDetectionArray
 
@@ -30,7 +30,6 @@ class TagFollower:
         self.tag_follow_msg = Float32MultiArray()
 
         self.listener = tf.TransformListener()
-        self.moveTurtlebot3_object = MoveTurtleBot3()
         self.twist_object = Twist()
 
         # Init detected_tag value
@@ -74,7 +73,7 @@ class TagFollower:
             # Publish the velocity data to /tag_follow_instruction
             self.tag_follow_msg.data = [self.twist_object.linear.x, self.twist_object.angular.z]
             self.tag_follow_pub.publish(self.tag_follow_msg)
-            self.moveTurtlebot3_object.move_robot(self.twist_object)
+
         else:
             # If no tag found, rotate in place
             self.twist_object.linear.x = 0
@@ -82,10 +81,9 @@ class TagFollower:
             # Publish the velocity data to /tag_follow_instruction
             self.tag_follow_msg.data = [self.twist_object.linear.x, self.twist_object.angular.z]
             self.tag_follow_pub.publish(self.tag_follow_msg)
-            self.moveTurtlebot3_object.move_robot(self.twist_object)
+
 
     def clean_up(self):
-        self.moveTurtlebot3_object.clean_class()
         cv2.destroyAllWindows()
 
 

@@ -6,6 +6,7 @@ from sensor_msgs.msg import Image
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Float32MultiArray
 #from std_msgs.msg import Int8
+from apriltag_ros.msg import AprilTagDetectionArray
 
 from move_TurtleBot3 import MoveTurtleBot3
 
@@ -24,14 +25,14 @@ class NodeController:
 
         # Subscriber which will get images from the topic '/camera/rgb/image_raw'
         self.image_sub = rospy.Subscriber(
-            "/camera/rgb/image_raw", Image, self.camera_callback)
+            "/tb3/camera/rgb/image_raw", Image, self.camera_callback)
 
-        """
-        # Subscriber which will get mode info from "/detect/"
-        # detect/tag/ publishes "1" only if tag is in sight
+        # Subscriber which will get  info from /tag_follow_instruction, only if tag is detected
+        self.tag_follow_sub = rospy.Subscriber(
+            "/tag_follow_instruction", Float32MultiArray, self.get_tag_info)
+
         self.tag_detect_sub = rospy.Subscriber(
-            "/detect/tag", Int8, self.mode_decider)
-        """
+            "/tag_detections", AprilTagDetectionArray, self.get_tag_flag)
 
         # Subscriber which will get velocity from the topic '/velocity'
         self.vel_sub = rospy.Subscriber(
@@ -56,7 +57,7 @@ class NodeController:
         self.velocity_info = [self.linear_x, 0]
 
         # Init the tag information
-        self.tag_info = []
+        self.tag_vel = []
 
         # Init the timer
         self.timer1 = 0
@@ -69,6 +70,9 @@ class NodeController:
         # Init a flag
         self.is_stop_sign = False
 
+        #Init a flag for tag detection
+        self.is_tag_detected = False
+
         # Init modes
         self.modes = {
             1: 'obstacle avoidance',
@@ -77,13 +81,13 @@ class NodeController:
         }
 
     def mode_decider(self):
-        if self.line_info and self.tag_info:
+        if self.line_info and self.is_tag_detected:
             self.mode = 2  # line following until no line detected
             return
         if self.line_info:  # line following
             self.mode = 2
             return
-        if self.tag_info:
+        if self.is_tag_detected:
             self.mode = 3  # tag following
             return
         self.mode = 1  # if no mode being published, default to obstacle and wall mode
@@ -102,6 +106,15 @@ class NodeController:
 
     def get_velocity_info(self, msg):
         self.velocity_info = msg.data
+
+    def get_tag_info(self,msg):
+        self.tag_vel = msg.data
+
+    def get_tag_flag(self,msg):
+        if len(msg.detections) > 0:
+            self.is_tag_detected = True
+        else:
+            self.is_tag_detected = False
 
     def camera_callback(self, msg):
         if self.mode_timer == 0:
@@ -176,7 +189,8 @@ class NodeController:
 
         elif self.mode == 3:
             """ This is april tag following scenario """
-            pass
+            self.vel_msg.linear.x = self.tag_vel[0]
+            self.vel_msg.angular.z = self.tag_vel[1]
 
         # Move the TurtleBot
         self.moveTurtlebot3_object.move_robot(self.vel_msg)

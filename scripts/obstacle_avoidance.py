@@ -23,7 +23,7 @@ class TurtleBot:
 
         # Subscriber to subscribe to '/scan' topic
         self.laser_sub = rospy.Subscriber(
-            'scan', LaserScan, self.laser_callback)
+            '/tb3/scan', LaserScan, self.laser_callback)
 
         self.vel_msg = Float32MultiArray()
 

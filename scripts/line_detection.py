@@ -15,7 +15,7 @@ class LineFollower:
 
         # Subscriber which will get images from the topic 'camera/rgb/image_raw'
         self.image_sub = rospy.Subscriber(
-            "/camera/rgb/image_raw", Image, self.camera_callback)
+            "/tb3/camera/rgb/image_raw", Image, self.camera_callback)
 
         # Publisher which will publish to the the topic '/line_following'
         self.line_following_pub = rospy.Publisher(

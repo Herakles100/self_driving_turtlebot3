@@ -19,7 +19,7 @@ class StopSignDetection:
 
         # Subscriber which will get images from the topic 'camera/rgb/image_raw'
         self.image_sub = rospy.Subscriber(
-            "/camera/rgb/image_raw", Image, self.camera_callback)
+            "/tb3/camera/rgb/image_raw", Image, self.camera_callback)
 
         # Publisher which will publish to the topic '/stop_sign'
         self.stop_sign_pub = rospy.Publisher('/stop_sign',
