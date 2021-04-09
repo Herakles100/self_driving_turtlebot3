@@ -74,15 +74,13 @@ class LineFollower:
             # Update the msg
             self.line_following_msg.data = [
                 cx, cy + height / 2 + upper_bound, angular_vel]
-            # Publish
-            self.line_following_pub.publish(self.line_following_msg)
-            self.rate.sleep()
         else:
             # Update the msg
             self.line_following_msg.data = []
-            # Publish
-            self.line_following_pub.publish(self.line_following_msg)
-            self.rate.sleep()
+
+        # Publish
+        self.line_following_pub.publish(self.line_following_msg)
+        self.rate.sleep()
 
 
 def main():
