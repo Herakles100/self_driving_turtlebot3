@@ -5,7 +5,6 @@ from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Float32MultiArray
-#from std_msgs.msg import Int8
 
 from move_TurtleBot3 import MoveTurtleBot3
 
@@ -22,16 +21,13 @@ class NodeController:
         self.stop_sign_sub = rospy.Subscriber(
             "/stop_sign", Float32MultiArray, self.get_stop_sign_info)
 
+        # Subscriber which will get information of apriltag from the topic '/apriltag_following'
+        self.apriltag_sub = rospy.Subscriber(
+            "/apriltag_following", Float32MultiArray, self.get_apriltag_info)
+
         # Subscriber which will get images from the topic '/camera/rgb/image_raw'
         self.image_sub = rospy.Subscriber(
             "/camera/rgb/image_raw", Image, self.camera_callback)
-
-        """
-        # Subscriber which will get mode info from "/detect/"
-        # detect/tag/ publishes "1" only if tag is in sight
-        self.tag_detect_sub = rospy.Subscriber(
-            "/detect/tag", Int8, self.mode_decider)
-        """
 
         # Subscriber which will get velocity from the topic '/velocity'
         self.vel_sub = rospy.Subscriber(
@@ -52,11 +48,14 @@ class NodeController:
         # Init the stop sign information
         self.stop_sign_info = []
 
+        # Init the apriltag information
+        self.apriltag_info = []
+
         # Init the velocity information
         self.velocity_info = [self.linear_x, 0]
 
         # Init the tag information
-        self.tag_info = []
+        self.apriltag_info = []
 
         # Init the timer
         self.timer1 = 0
@@ -66,8 +65,11 @@ class NodeController:
         # Init mode
         self.mode = 1  # Default to obstacle avoidance and wall following
 
-        # Init a flag
+        # Init stop sign flag
         self.is_stop_sign = False
+
+        # Init the threshold of transition
+        self.transition_threshold = 1
 
         # Init modes
         self.modes = {
@@ -77,16 +79,22 @@ class NodeController:
         }
 
     def mode_decider(self):
-        if self.line_info and self.tag_info:
-            self.mode = 2  # line following until no line detected
-            return
-        if self.line_info:  # line following
+        if self.line_info and self.apriltag_info:
             self.mode = 2
+            self.transition_threshold = 1
             return
-        if self.tag_info:
+        if self.line_info:
+            self.mode = 2
+            self.transition_threshold = 1
+            return
+        if self.apriltag_info:
             self.mode = 3  # tag following
+            self.transition_threshold = 5
             return
-        self.mode = 1  # if no mode being published, default to obstacle and wall mode
+
+        # if no mode being published, default to obstacle and wall mode
+        self.mode = 1
+        self.transition_threshold = 1
 
     def get_line_info(self, msg):
         if msg.data:
@@ -100,13 +108,46 @@ class NodeController:
         else:
             self.stop_sign_info = []
 
+    def get_apriltag_info(self, msg):
+        if msg.data:
+            self.apriltag_info = msg.data
+        else:
+            self.apriltag_info = []
+
     def get_velocity_info(self, msg):
         self.velocity_info = msg.data
 
+    def draw_detections(self, img):
+        # Draw detected results
+        if self.line_info:
+            # Draw the center of detected line
+            x_center = int(self.line_info[0])
+            y_center = int(self.line_info[1])
+            cv2.circle(img, (x_center, y_center), 10, (0, 0, 255), -1)
+
+        if self.stop_sign_info:
+            # Draw the detected stop sign
+            x1y1 = (int(self.stop_sign_info[1]), int(
+                self.stop_sign_info[2]))
+            x2y2 = (int(self.stop_sign_info[3]), int(
+                self.stop_sign_info[4]))
+            img = cv2.rectangle(img, x1y1, x2y2, (255, 0, 0), 2)
+
+        if self.apriltag_info:
+            # Draw the detected april tag
+            x1y1 = (int(self.apriltag_info[0]), int(
+                self.apriltag_info[1]))
+            x2y2 = (int(self.apriltag_info[2]), int(
+                self.apriltag_info[3]))
+            img = cv2.rectangle(img, x1y1, x2y2, (255, 0, 0), 2)
+
+        return img
+
     def camera_callback(self, msg):
+        # Threshold of transition
         if self.mode_timer == 0:
             self.mode_timer = rospy.Time.now().to_sec()
-        elif rospy.Time.now().to_sec() - self.mode_timer >= 1:
+        elif rospy.Time.now().to_sec() - self.mode_timer >= self.transition_threshold:
             # Decide mode
             self.mode_decider()
             self.mode_timer = 0
@@ -120,9 +161,7 @@ class NodeController:
                                (15, 15), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1,
                                (0, 0, 255), 1)
 
-        # Init the default velocity
-        self.vel_msg.linear.x = self.linear_x
-        self.vel_msg.angular.z = 0
+        cv_image = self.draw_detections(cv_image)
 
         if self.mode == 1:
             self.vel_msg.linear.x = self.velocity_info[0]
@@ -130,25 +169,16 @@ class NodeController:
 
         elif self.mode == 2:
             # This is line following scenario
-            # If the line is detected, publish the angular velocity determined by the line-following algorithm
-            if self.line_info:
-                # Draw the center of detected line
-                x_center = int(self.line_info[0])
-                y_center = int(self.line_info[1])
-                cv2.circle(cv_image, (x_center, y_center), 10, (0, 0, 255), -1)
+            # Init the default velocity
+            self.vel_msg.linear.x = self.linear_x / 2
+            self.vel_msg.angular.z = 0
 
+            if self.line_info:
                 # Get the angular velocity publushed by line-follower node
                 self.vel_msg.angular.z = self.line_info[-1]
 
             # If the stop sign is detected
             if self.stop_sign_info:
-                # Draw the detected stop sign
-                x1y1 = (int(self.stop_sign_info[1]), int(
-                    self.stop_sign_info[2]))
-                x2y2 = (int(self.stop_sign_info[3]), int(
-                    self.stop_sign_info[4]))
-                cv_image = cv2.rectangle(cv_image, x1y1, x2y2, (255, 0, 0), 2)
-
                 # If the stop sign is close to the TurtleBot (the area is large enough)
                 # Change the threshold to 7000 if using stop_sign_detection_yolo
                 if self.stop_sign_info[-1] >= 3300:
@@ -175,8 +205,11 @@ class NodeController:
                         self.is_stop_sign = False
 
         elif self.mode == 3:
-            """ This is april tag following scenario """
-            pass
+            # This is april tag following scenario
+            if self.apriltag_info:
+                # Get the linear and angular velocity publushed by apriltag-follower node
+                self.vel_msg.linear.x = self.apriltag_info[4]
+                self.vel_msg.angular.z = self.apriltag_info[5]
 
         # Move the TurtleBot
         self.moveTurtlebot3_object.move_robot(self.vel_msg)
