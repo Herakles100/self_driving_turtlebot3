@@ -1,0 +1,21 @@
+<launch>
+
+  <arg name="model" default="$(env TURTLEBOT3_MODEL)" doc="model type [burger, waffle, waffle_pi]"/>
+  <arg name="multi_robot_name" default=""/>
+  <arg name="x_pos" default="-0.2"/>
+  <arg name="y_pos" default="1.6"/>
+  <arg name="z_pos" default="0"/>  
+  <arg name="yaw_pos" default="3.14"/>
+
+
+  <!--<include file="$(find turtlebot3_bringup)/launch/includes/description.launch.xml">
+    <arg name="model" value="$(arg model)" />
+  </include>-->
+
+  <param name="robot_description" command="$(find xacro)/xacro --inorder $(find turtlebot3_description)/urdf/turtlebot3_$(arg model).urdf.xacro" />
+
+  <!-- Task 1 - Wall Following and Obstacle Avoidance -->
+  <node pkg="aue_finals" type="obstacle_avoidance_real.py" name="obstacle_avoidance">
+  </node>
+
+</launch>
