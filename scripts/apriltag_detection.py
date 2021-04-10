@@ -36,12 +36,6 @@ class TagFollower:
         # Init the publish rate
         self.rate = rospy.Rate(10)
 
-        # Init PID controller
-        Kp = rospy.get_param('~Kp')
-        Ki = rospy.get_param('~Ki')
-        Kd = rospy.get_param('~Kd')
-        self.pid_object = PID(Kp, Ki, Kd)
-
         # Init the default linear speed
         self.default_linear_x = rospy.get_param('~linear_x')
 
@@ -86,11 +80,12 @@ class TagFollower:
             x1, y1 = left_top[0], left_top[1]
             x2, y2 = right_bottom[0], right_bottom[1]
 
+            cx = abs(x1 - x2) / 2 + x1
             # Controlling the angular velocity
-            error_x = abs(x1 - x2) - width / 2
-            angular_z = self.pid_object.update(error_x) / 2000
+            error_x = cx - width / 2
+            angular_z = error_x / -2000
 
-            if largest_are < 10000:
+            if largest_are < 10000 and abs(angular_z) < 0.05:
                 linear_x = self.default_linear_x
             else:
                 linear_x = 0

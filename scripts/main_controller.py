@@ -105,7 +105,7 @@ class NodeController:
             return
         if self.apriltag_info:
             self.mode = 3  # tag following
-            self.transition_threshold = 10000
+            self.transition_threshold = 100
             return
 
         # if no mode being published, default to obstacle and wall mode
@@ -233,7 +233,7 @@ class NodeController:
                 self.vel_msg.angular.z = self.apriltag_info[5]
             else:
                 self.vel_msg.linear.x = 0
-                self.vel_msg.angular.z = 0
+                self.vel_msg.angular.z = -0.2
 
         # Print velocity information on the camera video
         cv_image = cv2.putText(cv_image, 'Vel (x, z): ' + str(round(self.vel_msg.linear.x, 2)),
