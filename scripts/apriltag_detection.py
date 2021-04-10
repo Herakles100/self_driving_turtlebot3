@@ -81,17 +81,14 @@ class TagFollower:
 
             tag = tags[index_largest_tag]
 
-            # Get the center of detected tag
-            cx, cy = tag['center']
-
             # Get four corners
             _, right_bottom, _, left_top = tag['lb-rb-rt-lt']
             x1, y1 = left_top[0], left_top[1]
             x2, y2 = right_bottom[0], right_bottom[1]
 
             # Controlling the angular velocity
-            error_x = cx - width / 2
-            angular_z = self.pid_object.update(error_x) / 450
+            error_x = abs(x1 - x2) - width / 2
+            angular_z = self.pid_object.update(error_x) / 2000
 
             if largest_are < 10000:
                 linear_x = self.default_linear_x

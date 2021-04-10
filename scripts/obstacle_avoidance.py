@@ -80,7 +80,7 @@ class TurtleBot:
         # Checking the distance from obstacles and
         # controlling speeds accordingly
         angular_z = K_right - K_left
-        linear_x = K_ahead * self.linear_x
+        linear_x = 2 * K_ahead * self.linear_x
 
         # Take the below policy if not in Gazebo
         if self.work_mode != 'simulation':

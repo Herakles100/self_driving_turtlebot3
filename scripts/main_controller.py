@@ -105,7 +105,7 @@ class NodeController:
             return
         if self.apriltag_info:
             self.mode = 3  # tag following
-            self.transition_threshold = 5
+            self.transition_threshold = 10000
             return
 
         # if no mode being published, default to obstacle and wall mode
@@ -191,7 +191,7 @@ class NodeController:
         elif self.mode == 2:
             # This is line following scenario
             # Init the default velocity
-            self.vel_msg.linear.x = self.linear_x / 2
+            self.vel_msg.linear.x = self.linear_x
             self.vel_msg.angular.z = 0
 
             if self.line_info:
@@ -231,13 +231,16 @@ class NodeController:
                 # Get the linear and angular velocity publushed by apriltag-follower node
                 self.vel_msg.linear.x = self.apriltag_info[4]
                 self.vel_msg.angular.z = self.apriltag_info[5]
+            else:
+                self.vel_msg.linear.x = 0
+                self.vel_msg.angular.z = 0
 
         # Print velocity information on the camera video
-        cv_image = cv2.putText(cv_image, 'x: ' + str(round(self.vel_msg.linear.x, 2)),
-                               (15, 40), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1,
+        cv_image = cv2.putText(cv_image, 'Vel (x, z): ' + str(round(self.vel_msg.linear.x, 2)),
+                               (380, 15), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1,
                                (0, 0, 255), 1)
-        cv_image = cv2.putText(cv_image, 'z: ' + str(round(self.vel_msg.angular.z, 2)),
-                               (120, 40), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1,
+        cv_image = cv2.putText(cv_image, ',' + str(round(self.vel_msg.angular.z, 2)),
+                               (560, 15), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1,
                                (0, 0, 255), 1)
 
         # Move the TurtleBot
