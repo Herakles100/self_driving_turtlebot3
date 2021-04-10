@@ -236,11 +236,11 @@ class NodeController:
                 self.vel_msg.angular.z = -0.2
 
         # Print velocity information on the camera video
-        cv_image = cv2.putText(cv_image, 'Vel (x, z): ' + str(round(self.vel_msg.linear.x, 2)),
-                               (380, 15), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1,
+        cv_image = cv2.putText(cv_image, 'Vel (x, z): ' + str(round(self.vel_msg.linear.x, 2)) + ',',
+                               (370, 15), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1,
                                (0, 0, 255), 1)
-        cv_image = cv2.putText(cv_image, ',' + str(round(self.vel_msg.angular.z, 2)),
-                               (560, 15), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1,
+        cv_image = cv2.putText(cv_image, str(round(self.vel_msg.angular.z, 2)),
+                               (570, 15), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1,
                                (0, 0, 255), 1)
 
         # Move the TurtleBot

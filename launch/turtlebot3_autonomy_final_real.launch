@@ -32,6 +32,7 @@
 
   <!-- April tag family -->
   <arg name="tag_family" default="tag36h11" />
+  <arg name="tag_area_threshold" default="10000" />
 
   <!-- Default linear speed -->
   <arg name="linear_x" default="0.1"/>
@@ -78,11 +79,9 @@
   <!-- april tag detection node -->
   <node pkg="aue_finals" type="apriltag_detection.py" name="apriltag_detection">
     <param name="work_mode" value="$(arg work_mode)" />
-    <param name="Kp" value="$(arg Kp)"/>
-    <param name="Ki" value="$(arg Ki)"/>
-    <param name="Kd" value="$(arg Kd)" />
     <param name="linear_x" value="$(arg linear_x)" />
     <param name="tag_family" value="$(arg tag_family)" />
+    <param name="tag_area_threshold" value="$(arg tag_area_threshold)" />
   </node>
 
   <!-- Main controller -->

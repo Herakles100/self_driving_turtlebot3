@@ -18,6 +18,8 @@ class TagFollower:
         # Init the work mode (simulation or real-world)
         self.work_mode = rospy.get_param('~work_mode')
 
+        self.area_threshold = rospy.get_param('~tag_area_threshold')
+
         if self.work_mode == 'simulation':
             # Subscriber which will get images from the topic 'camera/rgb/image_raw'
             self.image_sub = rospy.Subscriber(
@@ -62,16 +64,16 @@ class TagFollower:
         if tags:
             # Pick the largest tag
             index_largest_tag = 0
-            largest_are = 0
+            largest_area = 0
             for i, tag in enumerate(tags):
                 # Get four corners
                 _, right_bottom, _, left_top = tag['lb-rb-rt-lt']
                 x1, y1 = left_top[0], left_top[1]
                 x2, y2 = right_bottom[0], right_bottom[1]
                 area = abs((x1 - x2) * (y1 - y2))
-                if area > largest_are:
+                if area > largest_area:
                     index_largest_tag = i
-                    largest_are = area
+                    largest_area = area
 
             tag = tags[index_largest_tag]
 
@@ -85,7 +87,7 @@ class TagFollower:
             error_x = cx - width / 2
             angular_z = error_x / -2000
 
-            if largest_are < 10000 and abs(angular_z) < 0.05:
+            if largest_area < self.area_threshold and abs(angular_z) < 0.05:
                 linear_x = self.default_linear_x
             else:
                 linear_x = 0
