@@ -6,6 +6,7 @@ import numpy as np
 import rospy
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
+from sensor_msgs.msg import CompressedImage
 from std_msgs.msg import Float32MultiArray
 import tensorflow as tf
 
@@ -21,9 +22,17 @@ class StopSignDetection:
     def __init__(self, yolo, class_names):
         self.bridge_object = CvBridge()
 
-        # Subscriber which will get images from the topic 'camera/rgb/image_raw'
-        self.image_sub = rospy.Subscriber(
-            "/camera/rgb/image_raw", Image, self.camera_callback)
+        # Init the work mode (simulation or real-world)
+        self.work_mode = rospy.get_param('~work_mode')
+
+        if self.work_mode == 'simulation':
+            # Subscriber which will get images from the topic 'camera/rgb/image_raw'
+            self.image_sub = rospy.Subscriber(
+                "/camera/rgb/image_raw", Image, self.camera_callback)
+        else:
+            # Subscriber which will get images from the topic '/raspicam_node/image/compressed'
+            self.image_sub = rospy.Subscriber(
+                "/raspicam_node/image/compressed", CompressedImage, self.camera_callback)
 
         # Publisher which will publish to the topic '/stop_sign'
         self.stop_sign_pub = rospy.Publisher('/stop_sign',
@@ -40,8 +49,13 @@ class StopSignDetection:
         self.class_names = class_names
 
     def camera_callback(self, image):
-        img_raw = self.bridge_object.imgmsg_to_cv2(
-            image, desired_encoding="rgb8")
+        if self.work_mode == 'simulation':
+            # Select bgr8 because its the OpenCV encoding by default
+            img_raw = self.bridge_object.imgmsg_to_cv2(
+                image, desired_encoding="bgr8")
+        else:
+            cv_np_arr = np.fromstring(image.data, np.uint8)
+            img_raw = cv2.imdecode(cv_np_arr, cv2.IMREAD_COLOR)
 
         # Preprocess the image
         img = tf.expand_dims(img_raw, 0)

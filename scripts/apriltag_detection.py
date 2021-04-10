@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import cv2
+import numpy as np
 from apriltag import apriltag
 import rospy
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
+from sensor_msgs.msg import CompressedImage
 from std_msgs.msg import Float32MultiArray
 
 from PID_controller import PID
@@ -13,9 +15,17 @@ class TagFollower:
     def __init__(self):
         self.bridge_object = CvBridge()
 
-        # Subscriber which will get images from the topic 'camera/rgb/image_raw'
-        self.image_sub = rospy.Subscriber(
-            "/camera/rgb/image_raw", Image, self.camera_callback)
+        # Init the work mode (simulation or real-world)
+        self.work_mode = rospy.get_param('~work_mode')
+
+        if self.work_mode == 'simulation':
+            # Subscriber which will get images from the topic 'camera/rgb/image_raw'
+            self.image_sub = rospy.Subscriber(
+                "/camera/rgb/image_raw", Image, self.camera_callback)
+        else:
+            # Subscriber which will get images from the topic '/raspicam_node/image/compressed'
+            self.image_sub = rospy.Subscriber(
+                "/raspicam_node/image/compressed", CompressedImage, self.camera_callback)
 
         self.tag_follow_pub = rospy.Publisher(
             "/apriltag_following", Float32MultiArray, queue_size=10)
@@ -39,11 +49,15 @@ class TagFollower:
         self.tag_family = rospy.get_param('~tag_family')
 
     def camera_callback(self, image):
-        # Convert RGB to BGR
-        img_raw = self.bridge_object.imgmsg_to_cv2(
-            image, desired_encoding="bgr8")
+        if self.work_mode == 'simulation':
+            # Select bgr8 because its the OpenCV encoding by default
+            img_raw = self.bridge_object.imgmsg_to_cv2(
+                image, desired_encoding="bgr8")
+        else:
+            cv_np_arr = np.fromstring(image.data, np.uint8)
+            img_raw = cv2.imdecode(cv_np_arr, cv2.IMREAD_COLOR)
 
-        height, width, _ = img_raw.shape
+        _, width, _ = img_raw.shape
 
         gray_image = cv2.cvtColor(img_raw, cv2.COLOR_BGR2GRAY)
 
