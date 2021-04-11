@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 import cv2
+import numpy as np
 import rospy
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
+from sensor_msgs.msg import CompressedImage
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Float32MultiArray
 
@@ -12,6 +14,18 @@ from move_TurtleBot3 import MoveTurtleBot3
 class NodeController:
     def __init__(self):
         self.bridge_object = CvBridge()
+
+        # Init the work mode (simulation or real-world)
+        self.work_mode = rospy.get_param('~work_mode')
+
+        if self.work_mode == 'simulation':
+            # Subscriber which will get images from the topic 'camera/rgb/image_raw'
+            self.image_sub = rospy.Subscriber(
+                "/camera/rgb/image_raw", Image, self.camera_callback)
+        else:
+            # Subscriber which will get images from the topic '/raspicam_node/image/compressed'
+            self.image_sub = rospy.Subscriber(
+                "/raspicam_node/image/compressed", CompressedImage, self.camera_callback)
 
         # Subscriber which will get angular velocity from the topic '/line_following' for line following
         self.line_following_sub = rospy.Subscriber(
@@ -25,19 +39,21 @@ class NodeController:
         self.apriltag_sub = rospy.Subscriber(
             "/apriltag_following", Float32MultiArray, self.get_apriltag_info)
 
-        # Subscriber which will get images from the topic '/camera/rgb/image_raw'
-        self.image_sub = rospy.Subscriber(
-            "/camera/rgb/image_raw", Image, self.camera_callback)
-
-        # Subscriber which will get velocity from the topic '/velocity'
-        self.vel_sub = rospy.Subscriber(
-            "/velocity", Float32MultiArray, self.get_velocity_info)
+        # Subscriber which will get obstacle avoidance decision from the topic '/obstacle_avoidance'
+        self.obstacle_avoidance_sub = rospy.Subscriber(
+            "/obstacle_avoidance", Float32MultiArray, self.get_obstacle_avoidance_info)
 
         # Init the velocity message
         self.vel_msg = Twist()
 
         # Init the default linear speed
         self.linear_x = rospy.get_param('~linear_x')
+
+        # Init the threshold of stop sign area
+        self.area_threshold = rospy.get_param('~area_threshold')
+
+        # Init the threshold of stop delay for stop sign
+        self.stop_delay = rospy.get_param('~stop_delay')
 
         # Init the method to move the TurtleBot
         self.moveTurtlebot3_object = MoveTurtleBot3()
@@ -51,8 +67,8 @@ class NodeController:
         # Init the apriltag information
         self.apriltag_info = []
 
-        # Init the velocity information
-        self.velocity_info = [self.linear_x, 0]
+        # Init the obstacle avoidance information
+        self.obstacle_avoidance_info = [self.linear_x, 0, 0]
 
         # Init the tag information
         self.apriltag_info = []
@@ -81,20 +97,20 @@ class NodeController:
     def mode_decider(self):
         if self.line_info and self.apriltag_info:
             self.mode = 2
-            self.transition_threshold = 1
+            self.transition_threshold = 0.1
             return
         if self.line_info:
             self.mode = 2
-            self.transition_threshold = 1
+            self.transition_threshold = 0.1
             return
         if self.apriltag_info:
             self.mode = 3  # tag following
-            self.transition_threshold = 5
+            self.transition_threshold = 100
             return
 
         # if no mode being published, default to obstacle and wall mode
         self.mode = 1
-        self.transition_threshold = 1
+        self.transition_threshold = 0.1
 
     def get_line_info(self, msg):
         if msg.data:
@@ -114,8 +130,8 @@ class NodeController:
         else:
             self.apriltag_info = []
 
-    def get_velocity_info(self, msg):
-        self.velocity_info = msg.data
+    def get_obstacle_avoidance_info(self, msg):
+        self.obstacle_avoidance_info = msg.data
 
     def draw_detections(self, img):
         # Draw detected results
@@ -143,7 +159,7 @@ class NodeController:
 
         return img
 
-    def camera_callback(self, msg):
+    def camera_callback(self, image):
         # Threshold of transition
         if self.mode_timer == 0:
             self.mode_timer = rospy.Time.now().to_sec()
@@ -152,25 +168,30 @@ class NodeController:
             self.mode_decider()
             self.mode_timer = 0
 
-        # Select bgr8 because its the OpneCV encoding by default
-        cv_image = self.bridge_object.imgmsg_to_cv2(
-            msg, desired_encoding="bgr8")
+        if self.work_mode == 'simulation':
+            # Select bgr8 because its the OpenCV encoding by default
+            cv_image = self.bridge_object.imgmsg_to_cv2(
+                image, desired_encoding="bgr8")
+        else:
+            cv_np_arr = np.fromstring(image.data, np.uint8)
+            cv_image = cv2.imdecode(cv_np_arr, cv2.IMREAD_COLOR)
 
         # Print mode information on the camera video
         cv_image = cv2.putText(cv_image, 'Mode: ' + self.modes[self.mode],
                                (15, 15), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1,
                                (0, 0, 255), 1)
 
+        # Draw detected results on camera image
         cv_image = self.draw_detections(cv_image)
 
         if self.mode == 1:
-            self.vel_msg.linear.x = self.velocity_info[0]
-            self.vel_msg.angular.z = self.velocity_info[1]
+            self.vel_msg.linear.x = self.obstacle_avoidance_info[0]
+            self.vel_msg.angular.z = self.obstacle_avoidance_info[1]
 
         elif self.mode == 2:
             # This is line following scenario
             # Init the default velocity
-            self.vel_msg.linear.x = self.linear_x / 2
+            self.vel_msg.linear.x = self.linear_x
             self.vel_msg.angular.z = 0
 
             if self.line_info:
@@ -181,7 +202,7 @@ class NodeController:
             if self.stop_sign_info:
                 # If the stop sign is close to the TurtleBot (the area is large enough)
                 # Change the threshold to 7000 if using stop_sign_detection_yolo
-                if self.stop_sign_info[-1] >= 3300:
+                if self.stop_sign_info[-1] >= self.area_threshold:
                     self.is_stop_sign = True
 
             if self.is_stop_sign:
@@ -189,7 +210,7 @@ class NodeController:
                 if self.timer1 == 0:
                     self.timer1 = rospy.Time.now().to_sec()
                 # Change the threshold to 14 if using stop_sign_detection_yolo
-                elif rospy.Time.now().to_sec() - self.timer1 >= 18:
+                elif rospy.Time.now().to_sec() - self.timer1 >= self.stop_delay:
                     # Stop the TurtleBot for 3 seconds
                     if self.timer2 == 0:
                         self.timer2 = rospy.Time.now().to_sec()
@@ -210,6 +231,17 @@ class NodeController:
                 # Get the linear and angular velocity publushed by apriltag-follower node
                 self.vel_msg.linear.x = self.apriltag_info[4]
                 self.vel_msg.angular.z = self.apriltag_info[5]
+            else:
+                self.vel_msg.linear.x = 0
+                self.vel_msg.angular.z = -0.2
+
+        # Print velocity information on the camera video
+        cv_image = cv2.putText(cv_image, 'Vel (x, z): ' + str(round(self.vel_msg.linear.x, 2)) + ',',
+                               (370, 15), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1,
+                               (0, 0, 255), 1)
+        cv_image = cv2.putText(cv_image, str(round(self.vel_msg.angular.z, 2)),
+                               (570, 15), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1,
+                               (0, 0, 255), 1)
 
         # Move the TurtleBot
         self.moveTurtlebot3_object.move_robot(self.vel_msg)

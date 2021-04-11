@@ -4,6 +4,7 @@ import numpy as np
 import rospy
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
+from sensor_msgs.msg import CompressedImage
 from std_msgs.msg import Float32MultiArray
 
 from PID_controller import PID
@@ -13,9 +14,17 @@ class LineFollower:
     def __init__(self):
         self.bridge_object = CvBridge()
 
-        # Subscriber which will get images from the topic 'camera/rgb/image_raw'
-        self.image_sub = rospy.Subscriber(
-            "/camera/rgb/image_raw", Image, self.camera_callback)
+        # Init the work mode (simulation or real-world)
+        self.work_mode = rospy.get_param('~work_mode')
+
+        if self.work_mode == 'simulation':
+            # Subscriber which will get images from the topic 'camera/rgb/image_raw'
+            self.image_sub = rospy.Subscriber(
+                "/camera/rgb/image_raw", Image, self.camera_callback)
+        else:
+            # Subscriber which will get images from the topic '/raspicam_node/image/compressed'
+            self.image_sub = rospy.Subscriber(
+                "/raspicam_node/image/compressed", CompressedImage, self.camera_callback)
 
         # Publisher which will publish to the the topic '/line_following'
         self.line_following_pub = rospy.Publisher(
@@ -40,16 +49,20 @@ class LineFollower:
         self.lower_HSV = np.array(eval(rospy.get_param('~lower_HSV')))
         self.upper_HSV = np.array(eval(rospy.get_param('~upper_HSV')))
 
-    def camera_callback(self, data):
-        # Select bgr8 because its the OpenCV encoding by default
-        cv_image = self.bridge_object.imgmsg_to_cv2(
-            data, desired_encoding="bgr8")
+    def camera_callback(self, image):
+        if self.work_mode == 'simulation':
+            # Select bgr8 because its the OpenCV encoding by default
+            img_raw = self.bridge_object.imgmsg_to_cv2(
+                image, desired_encoding="bgr8")
+        else:
+            cv_np_arr = np.fromstring(image.data, np.uint8)
+            img_raw = cv2.imdecode(cv_np_arr, cv2.IMREAD_COLOR)
 
         # Crop the parts of the image we don't need
-        height, width, _ = cv_image.shape
+        height, width, _ = img_raw.shape
         upper_bound, lower_bound = 180, 230
-        crop_img = cv_image[int(height/2) +
-                            upper_bound:int(height/2) + lower_bound][:]
+        crop_img = img_raw[int(height/2) +
+                           upper_bound:int(height/2) + lower_bound][:]
 
         # Convert from RGB to HSV
         hsv = cv2.cvtColor(crop_img, cv2.COLOR_BGR2HSV)

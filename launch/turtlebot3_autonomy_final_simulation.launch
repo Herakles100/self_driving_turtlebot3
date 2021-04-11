@@ -1,12 +1,18 @@
 <launch>
   <arg name="model" default="$(env TURTLEBOT3_MODEL)" doc="model type [burger, waffle, waffle_pi]"/>
-  <arg name="multi_robot_name" default=""/>
+  <arg name="multi_robot_name" default="" />
+
+  <!-- Work mode -->
+  <arg name='work_mode' default="simulation" />
 
   <!-- Init TurtleBot3 pose -->
   <arg name="x_pos" default="-0.2"/>
   <arg name="y_pos" default="1.6"/>
   <arg name="z_pos" default="0"/>
   <arg name="yaw_pos" default="3.14"/>
+
+  <!-- View range for obstacle avoidance -->
+  <arg name="view_range" default="[30, 60]" />
 
   <!-- PID controller parameters -->
   <arg name="Kp" default="0.2"/>
@@ -20,11 +26,16 @@
   <!-- Line center shift -->
   <arg name="line_center_shift" default="50" />
 
+  <!-- Stop sign threshold -->
+  <arg name="area_threshold" default="3300" />
+  <arg name="stop_delay" default="18" />
+
   <!-- April tag family -->
   <arg name="tag_family" default="tag36h11" />
+  <arg name="tag_area_threshold" default="10000" />
 
   <!-- Default linear speed -->
-  <arg name="linear_x" default="0.1"/>
+  <arg name="linear_x" default="0.05"/>
 
   <!-- Load world -->
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
@@ -44,11 +55,14 @@
 
   <!-- Obstacle Avoidance node -->
   <node pkg="aue_finals" type="obstacle_avoidance.py" name="obstacle_avoidance">
+    <param name="work_mode" value="$(arg work_mode)" />
     <param name="linear_x" value="$(arg linear_x)" />
+    <param name="view_range" value="$(arg view_range)" />
   </node>
 
   <!-- Line Detection node -->
   <node pkg="aue_finals" type="line_detection.py" name="line_detection">
+    <param name="work_mode" value="$(arg work_mode)" />
     <param name="Kp" value="$(arg Kp)"/>
     <param name="Ki" value="$(arg Ki)"/>
     <param name="Kd" value="$(arg Kd)" />
@@ -58,20 +72,24 @@
   </node>
 
   <!-- Stop sign detection node -->
-  <node pkg="aue_finals" type="stop_sign_detection_cv.py" name="stop_sign_detection" />
+  <node pkg="aue_finals" type="stop_sign_detection_cv.py" name="stop_sign_detection">
+    <param name="work_mode" value="$(arg work_mode)" />
+  </node>
 
   <!-- april tag detection node -->
   <node pkg="aue_finals" type="apriltag_detection.py" name="apriltag_detection">
-    <param name="Kp" value="$(arg Kp)"/>
-    <param name="Ki" value="$(arg Ki)"/>
-    <param name="Kd" value="$(arg Kd)" />
+    <param name="work_mode" value="$(arg work_mode)" />
     <param name="linear_x" value="$(arg linear_x)" />
     <param name="tag_family" value="$(arg tag_family)" />
+    <param name="tag_area_threshold" value="$(arg tag_area_threshold)" />
   </node>
 
   <!-- Main controller -->
   <node pkg="aue_finals" type="main_controller.py" name="main_controller">
+    <param name="work_mode" value="$(arg work_mode)" />
     <param name="linear_x" value="$(arg linear_x)" />
+    <param name="area_threshold" value="$(arg area_threshold)" />
+    <param name="stop_delay" value="$(arg stop_delay)" />
   </node>
 
 </launch>
