@@ -24,7 +24,7 @@
   <arg name="upper_HSV" default="[50, 255, 255]" />
 
   <!-- Line center shift -->
-  <arg name="line_center_shift" default="50" />
+  <arg name="line_center_shift" default="0" />
 
   <!-- Stop sign threshold -->
   <arg name="area_threshold" default="3300" />
