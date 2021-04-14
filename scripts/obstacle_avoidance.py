@@ -63,29 +63,49 @@ class TurtleBot:
         left = self.current_distance[-self.view_range[1]:-self.view_range[0]]
         # Right view
         right = self.current_distance[self.view_range[0]:self.view_range[1]]
+        
+        front_right = self.current_distance[0:self.view_range[1]-30]
+        front_left = self.current_distance[-self.view_range[1] + 30:-1]
 
         # Take average
         ahead_mean = np.mean(ahead)
         left_mean = np.mean(left)
         right_mean = np.mean(right)
+        
+        front_right_mean = np.min(front_right)
+        front_left_mean = np.min(front_left)
+        
 
         # Pick the minimum distance in the forward view
         ahead_min = np.min(ahead)
+        
+        rospy.logwarn('--------------------------------------------')
+        rospy.logwarn('Ahead: ' + str(ahead_min))
+        rospy.logwarn('Front right: ' + str(front_right_mean))
+        rospy.logwarn('Front left: ' + str(front_left_mean))
+        rospy.logwarn('--------------------------------------------')
+        
 
         # Setting up the Proportional gain values
         K_left = left_mean / (ahead_mean + right_mean)
         K_right = right_mean / (ahead_mean + left_mean)
+        
+
+        
         K_ahead = fwd
 
         # Checking the distance from obstacles and
         # controlling speeds accordingly
         angular_z = K_right - K_left
-        linear_x = 2 * K_ahead * self.linear_x
+        linear_x = K_ahead * self.linear_x
 
         # Take the below policy if not in Gazebo
         if self.work_mode != 'simulation':
-            if 0.05 < ahead_min <= 0.3:
-                angular_z = -0.4
+            if 0.05 < ahead_min <= 0.4:
+                if front_right_mean > front_left_mean:
+                    angular_z = -0.4
+                else:
+                    angular_z = 0.4
             elif ahead_min < 0.05:
                 linear_x = 0
 

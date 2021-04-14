@@ -50,7 +50,7 @@ class StopSignDetection:
             img_raw = self.bridge_object.imgmsg_to_cv2(
                 image, desired_encoding="bgr8")
         else:
-            cv_np_arr = np.fromstring(image.data, np.uint8)
+            cv_np_arr = np.frombuffer(image.data, np.uint8)
             img_raw = cv2.imdecode(cv_np_arr, cv2.IMREAD_COLOR)
 
         # Init stop sign
