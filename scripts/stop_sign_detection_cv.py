@@ -59,7 +59,7 @@ class StopSignDetection:
         # Detect
         gray_image = cv2.cvtColor(img_raw, cv2.COLOR_BGR2GRAY)
         stop_sign = self.stop_sign_classifier.detectMultiScale(
-            gray_image, 1.2, 5, maxSize=(70, 70))
+            gray_image, 1.2, 5, maxSize=(120, 120))
 
         if len(stop_sign) != 0:
             stop_sign = list(stop_sign[0])
