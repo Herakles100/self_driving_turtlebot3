@@ -75,7 +75,7 @@ class TurtleBot:
         d_k, sigma_k, theta_k = self.detect_obstacles(distances)
 
         optimal_theta_i = self.theta_is[0]
-        min_total_potential_field = 0
+        min_total_potential_field = np.inf
         for theta_i in self.theta_is:
             # Construct repulsive Gaussian potential field
             repulsive_potential_field = self.construct_repulsive_field(
@@ -121,7 +121,7 @@ class TurtleBot:
 
         # Loop through the distances to find out all obstacles
         start_obstacle = 0
-        end_obstacle = 1
+        end_obstacle = 0
         is_obstacle = False
         for i in range(distances.shape[0]):
             if distances[i] == 0:
