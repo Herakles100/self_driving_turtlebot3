@@ -11,26 +11,28 @@
   <arg name="z_pos" default="0"/>
   <arg name="yaw_pos" default="3.14"/>
 
-  <!-- View range for obstacle avoidance -->
-  <arg name="view_range" default="[30, 60]" />
+  <!-- Parameters for obstacle avoidance -->
+  <arg name="turtlebot_width" default="0.18" />
+  <arg name="max_lidar_range" default="3.5" />
+  <arg name="obstacle_distance_threshold" default="0.5" />
+  <arg name="theta_goal" default="0" />
+  <arg name="gamma" default="5" />
+  <arg name="param_proportional_control" default="50" />
 
-  <!-- PID controller parameters -->
+
+  <!-- Parameters for line following-->
   <arg name="Kp" default="0.2"/>
   <arg name="Ki" default="0.008"/>
   <arg name="Kd" default="0.2" />
-
-  <!-- Line color -->
   <arg name="lower_HSV" default="[20, 100, 100]" />
   <arg name="upper_HSV" default="[50, 255, 255]" />
-
-  <!-- Line center shift -->
   <arg name="line_center_shift" default="50" />
 
-  <!-- Stop sign threshold -->
+  <!-- Parameters for stop sign detection -->
   <arg name="area_threshold" default="3300" />
   <arg name="stop_delay" default="18" />
 
-  <!-- April tag family -->
+  <!-- Parameters for April tag detection -->
   <arg name="tag_family" default="tag36h11" />
   <arg name="tag_area_threshold" default="10000" />
 
@@ -57,7 +59,12 @@
   <node pkg="aue_finals" type="obstacle_avoidance.py" name="obstacle_avoidance">
     <param name="work_mode" value="$(arg work_mode)" />
     <param name="linear_x" value="$(arg linear_x)" />
-    <param name="view_range" value="$(arg view_range)" />
+    <param name="turtlebot_width" value="$(arg turtlebot_width)" />
+    <param name="max_lidar_range" value="$(arg max_lidar_range)" />
+    <param name="obstacle_distance_threshold" value="$(arg obstacle_distance_threshold)" />
+    <param name="theta_goal" value="$(arg theta_goal)" />
+    <param name="gamma" value="$(arg gamma)" />
+    <param name="theta_goal" value="$(arg theta_goal)" />
   </node>
 
   <!-- Line Detection node -->
@@ -68,7 +75,7 @@
     <param name="Kd" value="$(arg Kd)" />
     <param name="lower_HSV" value="$(arg lower_HSV)" />
     <param name="upper_HSV" value="$(arg upper_HSV)" />
-    <param name="line_center_shift" value="$(arg line_center_shift)" />
+    <param name="param_proportional_control" value="$(arg param_proportional_control)" />
   </node>
 
   <!-- Stop sign detection node -->

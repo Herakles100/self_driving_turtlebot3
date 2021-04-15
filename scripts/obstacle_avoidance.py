@@ -2,11 +2,12 @@
 import numpy as np
 import rospy
 from sensor_msgs.msg import LaserScan
+from nav_msgs.msg import Odometry
 from std_msgs.msg import Float32MultiArray
+from tf.transformations import euler_from_quaternion
 
 
 class TurtleBot:
-
     def __init__(self, node_name):
         # Creates a node with the specified name and make sure it is a
         # unique node (using anonymous=True).
@@ -19,33 +20,79 @@ class TurtleBot:
         self.obstacle_avoidance_pub = rospy.Publisher(
             '/obstacle_avoidance', Float32MultiArray, queue_size=10)
 
-        # Subscriber to subscribe to '/scan' topic
-        self.laser_sub = rospy.Subscriber(
-            'scan', LaserScan, self.laser_callback)
+        # Init the publish rate
+        self.rate = rospy.Rate(10)
 
+        # Subscriber to subscribe from '/scan' topic
+        self.lidar_sub = rospy.Subscriber(
+            '/scan', Odometry, self.laser_callback)
+
+        # Subscriber to subscribe from '/odom' topic
+        self.odom_sub = rospy.Subscriber(
+            '/odom', Odometry, self.odom_callback)
+
+        # Init the msg to publish
         self.obs_avoid_dec_msg = Float32MultiArray()
 
         # Default velocity
         self.linear_x = rospy.get_param('~linear_x')
 
-        # Init view range
-        self.view_range = eval(rospy.get_param('~view_range'))
+        # Init distance threshold
+        self.threshold = rospy.get_param('~obstacle_distance_threshold')
 
-        # Init the publish rate
-        self.rate = rospy.Rate(10)
+        # Init gamma for attractive potential field
+        self.gamma = rospy.get_param('~gamma')
 
-        # Init distance reading
-        self.current_distance = [100] * 360
+        # Init param of proportional control
+        self.p = rospy.get_param('~param_proportional_control')
+
+        # Init the turtlebot's width
+        self.robot_width = rospy.get_param('~turtlebot_width')
+
+        # Init the maximum range of lidar
+        self.d_max = rospy.get_param('~max_lidar_range')
+
+        # Init the goal
+        self.theta_goal = rospy.get_param('~theta_goal')
+
+        # Init the yaw angle in degrees
+        self.yaw_angle = 0
+
+        # Init theta_i which represents choices
+        self.theta_i = np.arange(-90, 91, 1)
+
+    def odom_callback(self, odom_data):
+        orientation_q = odom_data.pose.pose.orientation
+        orientation_list = [orientation_q.x, orientation_q.y,
+                            orientation_q.z, orientation_q.w]
+        *_, self.yaw_angle = euler_from_quaternion(orientation_list)
 
     def laser_callback(self, laser_data):
-        # Update only if the incoming range data is within the limits
-        for i, dist in enumerate(laser_data.ranges):
-            if laser_data.range_min < dist < laser_data.range_max:
-                self.current_distance[i] = dist
+        # Pick out the data in the specific view range
+        distances = laser_data.ranges[-90:-1] + laser_data.ranges[:90]
 
-        # Keep moving till the robot sees an obstacle at
-        # less than safe distance
-        self.obs_avoid_dec_msg.data = self.make_decision()
+        # Detect all obstacles within the threshold
+        d_k, sigma_k, theta_k = self.detect_obstacles(distances)
+
+        # Construct repulsive Gaussian potential field
+        repulsive_potential_field = self.construct_repulsive_field(
+            d_k, sigma_k, theta_k)
+
+        # Construct attractive Gaussian potential field
+        attractive_potential_field = self.construc_attractive_field()
+
+        # Total potential field
+        tatal_potential_field = repulsive_potential_field + attractive_potential_field
+
+        # Find the optimal thete that cna minimize the total potential field
+        theta_star = None
+
+        # Determin the angular z using proportional control
+        error = theta_star - self.yaw_angle
+        angular_z = error / self.p
+
+        # Create the msg to publish
+        self.obs_avoid_dec_msg.data = [self.linear_x, angular_z]
 
         # Publishing our vel_msg
         self.obstacle_avoidance_pub.publish(self.obs_avoid_dec_msg)
@@ -53,43 +100,31 @@ class TurtleBot:
         # Publish at the desired rate.
         self.rate.sleep()
 
-    def make_decision(self):
-        # Segmenting the laser data
-        # straight ahead
-        fwd = self.current_distance[0]
-        # forward view
-        ahead = self.current_distance[-self.view_range[0]:-1] + self.current_distance[:self.view_range[0]]
-        # Left view
-        left = self.current_distance[-self.view_range[1]:-self.view_range[0]]
-        # Right view
-        right = self.current_distance[self.view_range[0]:self.view_range[1]]
+    def detect_obstacles(self, distance):
+        """ Detect all obstacles within the threshold """
+        d_k = []
+        sigma_k = []
+        theta_k = []
 
-        # Take average
-        ahead_mean = np.mean(ahead)
-        left_mean = np.mean(left)
-        right_mean = np.mean(right)
+        # TODO: implement this function
 
-        # Pick the minimum distance in the forward view
-        ahead_min = np.min(ahead)
+        return d_k, sigma_k, theta_k
 
-        # Setting up the Proportional gain values
-        K_left = left_mean / (ahead_mean + right_mean)
-        K_right = right_mean / (ahead_mean + left_mean)
-        K_ahead = fwd
+    def construct_repulsive_field(self, d_k, sigma_k, theta_k):
+        """ Construct the repulsive Gaussian potential field """
+        f_rep = 0
 
-        # Checking the distance from obstacles and
-        # controlling speeds accordingly
-        angular_z = K_right - K_left
-        linear_x = 2 * K_ahead * self.linear_x
+        # TODO: implement this function
 
-        # Take the below policy if not in Gazebo
-        if self.work_mode != 'simulation':
-            if 0.05 < ahead_min <= 0.3:
-                angular_z = -0.4
-            elif ahead_min < 0.05:
-                linear_x = 0
+        return f_rep
 
-        return [linear_x, angular_z, fwd]
+    def construct_attractive_field(self):
+        """ Construct the attractive Gaussian potential field """
+        f_att = 0
+
+        # TODO: implement this function
+
+        return f_att
 
 
 if __name__ == '__main__':
