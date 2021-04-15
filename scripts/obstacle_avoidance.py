@@ -25,7 +25,7 @@ class TurtleBot:
 
         # Subscriber to subscribe from '/scan' topic
         self.lidar_sub = rospy.Subscriber(
-            '/scan', Odometry, self.laser_callback)
+            '/scan', LaserScan, self.laser_callback)
 
         # Subscriber to subscribe from '/odom' topic
         self.odom_sub = rospy.Subscriber(
@@ -59,7 +59,7 @@ class TurtleBot:
         self.yaw_angle = 0
 
         # Init theta_i which represents choices
-        self.theta_i = np.arange(-90, 91, 1)
+        self.theta_is = list(range(-90, 91))
 
     def odom_callback(self, odom_data):
         orientation_q = odom_data.pose.pose.orientation
@@ -74,21 +74,27 @@ class TurtleBot:
         # Detect all obstacles within the threshold
         d_k, sigma_k, theta_k = self.detect_obstacles(distances)
 
-        # Construct repulsive Gaussian potential field
-        repulsive_potential_field = self.construct_repulsive_field(
-            d_k, sigma_k, theta_k)
+        optimal_theta_i = self.theta_is[0]
+        min_total_potential_field = 0
+        for theta_i in self.theta_is:
+            # Construct repulsive Gaussian potential field
+            repulsive_potential_field = self.construct_repulsive_field(
+                d_k, sigma_k, theta_k, theta_i)
 
-        # Construct attractive Gaussian potential field
-        attractive_potential_field = self.construc_attractive_field()
+            # Construct attractive Gaussian potential field
+            attractive_potential_field = self.construct_attractive_field(
+                theta_i)
 
-        # Total potential field
-        tatal_potential_field = repulsive_potential_field + attractive_potential_field
+            # Total potential field
+            total_potential_field = repulsive_potential_field + attractive_potential_field
 
-        # Find the optimal thete that cna minimize the total potential field
-        theta_star = None
+            # Find the optimal thete that cna minimize the total potential field
+            if total_potential_field <= min_total_potential_field:
+                optimal_theta_i = theta_i
+                min_total_potential_field = total_potential_field
 
         # Determin the angular z using proportional control
-        error = theta_star - self.yaw_angle
+        error = optimal_theta_i - self.yaw_angle
         angular_z = error / self.p
 
         # Create the msg to publish
@@ -106,25 +112,50 @@ class TurtleBot:
         sigma_k = []
         theta_k = []
 
-        # TODO: implement this function
+        # Init the offset for the angle
+        offset = 90
+
+        # If the distance is smaller than the threshold, let it be 0
+        distances = np.array(distance)
+        distances = np.where(distances < self.threshold, 0, distances)
+
+        # Loop through the distances to find out all obstacles
+        start_obstacle = 0
+        end_obstacle = 1
+        is_obstacle = False
+        for i in range(distances.shape[0]):
+            if distances[i] == 0:
+                if not is_obstacle:
+                    start_obstacle = i - offset
+                    is_obstacle = True
+                    continue
+
+            if distance[i] != 0 and is_obstacle:
+                end_obstacle = i - offset
+
+                d_k.append(distances[start_obstacle:end_obstacle].mean())
+                sigma_k.append(end_obstacle - start_obstacle)
+                theta_k.append(sigma_k[-1] / 2)
+
+                is_obstacle = False
 
         return d_k, sigma_k, theta_k
 
-    def construct_repulsive_field(self, d_k, sigma_k, theta_k):
+    def construct_repulsive_field(self, d_k, sigma_k, theta_k, theta_i):
         """ Construct the repulsive Gaussian potential field """
         f_rep = 0
 
-        # TODO: implement this function
+        for i in range(len(d_k)):
+            tilde_d_k = self.d_max - d_k[i]
+            A_k = tilde_d_k * np.exp(0.5)
+            f = A_k * np.exp(-(theta_k[i] - theta_i)**2 / (2 * sigma_k[i]**2))
+            f_rep += f
 
         return f_rep
 
-    def construct_attractive_field(self):
+    def construct_attractive_field(self, theta_i):
         """ Construct the attractive Gaussian potential field """
-        f_att = 0
-
-        # TODO: implement this function
-
-        return f_att
+        return self.gamma * abs(self.theta_goal - theta_i)
 
 
 if __name__ == '__main__':

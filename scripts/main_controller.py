@@ -105,7 +105,7 @@ class NodeController:
             return
         if self.apriltag_info:
             self.mode = 3  # tag following
-            self.transition_threshold = 100
+            self.transition_threshold = 1
             return
 
         # if no mode being published, default to obstacle and wall mode
