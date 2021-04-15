@@ -54,75 +54,47 @@ class TurtleBot:
         self.rate.sleep()
 
     def make_decision(self):
-        # Segmenting the laser data
-        # straight ahead
-        fwd = self.current_distance[0]
-        # forward view
-        ahead = self.current_distance[-37:-1] + self.current_distance[:37]
-        
-        #37
-        
-        # Left view
-        left = self.current_distance[-self.view_range[1]:-37]
-        # Right view
-        right = self.current_distance[37:self.view_range[1]]
-        
-        front_right = self.current_distance[15:self.view_range[1]]
-        front_left = self.current_distance[-self.view_range[1]:-15]
-        
-        # 15
-        
-        # Total_range = self.current_distance[-self.view_range[1]:self.view_range[1]]
-        # Take average
-        
-        #front_right = [x for x in front_right if x < 1]
-        #front_left = [x for x in front_left if x < 1]
-        
-        ahead_mean = np.mean(ahead)
-        left_mean = np.mean(left)
-        right_mean = np.mean(right)
-        
-        front_right_mean = np.min(front_right)
-        front_left_mean = np.min(front_left)
-        
-        
 
-
-        # Pick the minimum distance in the forward view
-        ahead_min = np.min(ahead)
+        lidar_range = self.current_distance[-90:90]
         
-        rospy.logwarn('--------------------------------------------')
-        rospy.logwarn('Ahead: ' + str(ahead_min))
-        rospy.logwarn('Front right: ' + str(front_right_mean))
-        rospy.logwarn('Front left: ' + str(front_left_mean))
-        rospy.logwarn('--------------------------------------------')
+        threshold = 2
         
-
-        # Setting up the Proportional gain values
-        K_left = left_mean / (ahead_mean + right_mean)
-        K_right = right_mean / (ahead_mean + left_mean)
+        Phi_k = 2*np.atan2(lidar_range_k*tan((-90+k)/2) + .178/2, lidar_range_k)
         
-
+        d_max = 3.5
         
-        K_ahead = fwd
+        d_bar_k = d_max - lidar_range_k
+        
+        A_k = d_bar_k*np.exp(1/2)
+        sigma_k= (-90+k)/2
+        
+        f_rep = sum(A_k*np.exp(-((theta_k - theta_i)^2)/(2*sigma_k^2)))
+        
+        f_att = 5*abs(theat_goal - theta_i)
+        
+        f_total = f_rep + f_att
+        
+        angle = np.argmin(f_total)
+        
+        # Rotate the bot to that angle
+        
+        linear_x = self.linear_x
+        angular_velocity = 0.5
+        
+	current_angle = 0
+	t0 = rospy.Time.now().to_sec()
 
-        # Checking the distance from obstacles and
-        # controlling speeds accordingly
-        angular_z = K_right - K_left
-        linear_x = K_ahead * self.linear_x
+	if current_angle < angle:
+	    # Calculate the current distance
+	    t1 = rospy.Time.now().to_sec()
+	    angular_z = angular_velocity
+	    current_angle = angular_z * (t1 - t0)
+	    # Publish at the desired rate.
+	    self.rate.sleep()
+	else:
+	    angular_z = 0
 
-        # Take the below policy if not in Gazebo
-        if self.work_mode != 'simulation':
-            if 0.1 < ahead_min <= 0.4:
-                if front_right_mean >= front_left_mean:
-                    angular_z = .35
-                    
-                else:
-                    angular_z = -.35
-            elif ahead_min < 0.1:
-                linear_x = 0
-
-        return [linear_x, angular_z, ahead_min]
+        return [linear_x, angular_z, fwd]
 
 
 if __name__ == '__main__':

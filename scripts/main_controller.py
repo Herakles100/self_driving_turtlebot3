@@ -191,7 +191,7 @@ class NodeController:
         elif self.mode == 2:
             # This is line following scenario
             # Init the default velocity
-            if self.obstacle_avoidance_info[-1] < 0.4:
+            if self.obstacle_avoidance_info[-1] < 0.6:
                 self.vel_msg.linear.x = self.obstacle_avoidance_info[0]
                 self.vel_msg.angular.z = self.obstacle_avoidance_info[1]
             else:
