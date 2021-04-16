@@ -105,11 +105,11 @@ class NodeController:
             return
         if self.apriltag_info:
             self.mode = 3  # tag following
-            self.transition_threshold = 100
+            self.transition_threshold = 10
             return
 
         # if no mode being published, default to obstacle and wall mode
-        self.mode = 1
+        #self.mode = 1
         self.transition_threshold = 0.1
 
     def get_line_info(self, msg):
@@ -173,7 +173,7 @@ class NodeController:
             cv_image = self.bridge_object.imgmsg_to_cv2(
                 image, desired_encoding="bgr8")
         else:
-            cv_np_arr = np.fromstring(image.data, np.uint8)
+            cv_np_arr = np.frombuffer(image.data, np.uint8)
             cv_image = cv2.imdecode(cv_np_arr, cv2.IMREAD_COLOR)
 
         # Print mode information on the camera video
@@ -191,8 +191,14 @@ class NodeController:
         elif self.mode == 2:
             # This is line following scenario
             # Init the default velocity
-            self.vel_msg.linear.x = self.linear_x
-            self.vel_msg.angular.z = 0
+            if self.obstacle_avoidance_info[-1] < 0.6:
+                self.vel_msg.linear.x = self.obstacle_avoidance_info[0]
+                self.vel_msg.angular.z = self.obstacle_avoidance_info[1]
+            else:
+                self.vel_msg.linear.x = self.linear_x
+                self.vel_msg.angular.z = 0
+            # self.vel_msg.linear.x = self.linear_x
+            # self.vel_msg.angular.z = 0
 
             if self.line_info:
                 # Get the angular velocity publushed by line-follower node
