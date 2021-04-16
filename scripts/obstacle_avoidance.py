@@ -59,13 +59,16 @@ class TurtleBot:
         self.yaw_angle = 0
 
         # Init theta_i which represents choices
-        self.theta_is = list(range(-90, 91))
+        self.theta_is = list(range(-180, 181))
 
     def odom_callback(self, odom_data):
         orientation_q = odom_data.pose.pose.orientation
         orientation_list = [orientation_q.x, orientation_q.y,
                             orientation_q.z, orientation_q.w]
-        *_, self.yaw_angle = euler_from_quaternion(orientation_list)
+        *_, yaw = euler_from_quaternion(orientation_list)
+
+        # Convert radian to degree
+        self.yaw_angle = yaw / 3.14 * 180
 
     def laser_callback(self, laser_data):
         # Pick out the data in the specific view range
@@ -74,24 +77,27 @@ class TurtleBot:
         # Detect all obstacles within the threshold
         d_k, sigma_k, theta_k = self.detect_obstacles(distances)
 
-        optimal_theta_i = self.theta_is[0]
-        min_total_potential_field = np.inf
-        for theta_i in self.theta_is:
-            # Construct repulsive Gaussian potential field
-            repulsive_potential_field = self.construct_repulsive_field(
-                d_k, sigma_k, theta_k, theta_i)
+        if d_k:
+            optimal_theta_i = self.theta_is[0]
+            min_total_potential_field = np.inf
+            for theta_i in self.theta_is:
+                # Construct repulsive Gaussian potential field
+                repulsive_potential_field = self.construct_repulsive_field(
+                    d_k, sigma_k, theta_k, theta_i)
 
-            # Construct attractive Gaussian potential field
-            attractive_potential_field = self.construct_attractive_field(
-                theta_i)
+                # Construct attractive Gaussian potential field
+                attractive_potential_field = self.construct_attractive_field(
+                    theta_i)
 
-            # Total potential field
-            total_potential_field = repulsive_potential_field + attractive_potential_field
+                # Total potential field
+                total_potential_field = repulsive_potential_field + attractive_potential_field
 
-            # Find the optimal thete that cna minimize the total potential field
-            if total_potential_field <= min_total_potential_field:
-                optimal_theta_i = theta_i
-                min_total_potential_field = total_potential_field
+                # Find the optimal thete that cna minimize the total potential field
+                if total_potential_field <= min_total_potential_field:
+                    optimal_theta_i = theta_i
+                    min_total_potential_field = total_potential_field
+        else:
+            optimal_theta_i = self.yaw_angle
 
         # Determin the angular z using proportional control
         error = optimal_theta_i - self.yaw_angle
@@ -126,18 +132,20 @@ class TurtleBot:
         for i in range(distances.shape[0]):
             if distances[i] == 0:
                 if not is_obstacle:
-                    start_obstacle = i - offset
+                    start_obstacle = i
                     is_obstacle = True
                     continue
 
-            if distance[i] != 0 and is_obstacle:
-                end_obstacle = i - offset
+            else:
+                if is_obstacle:
+                    end_obstacle = i
 
-                d_k.append(distances[start_obstacle:end_obstacle].mean())
-                sigma_k.append(end_obstacle - start_obstacle)
-                theta_k.append(sigma_k[-1] / 2)
+                    d_k.append(distances[start_obstacle:end_obstacle].mean())
+                    sigma_k.append(end_obstacle - start_obstacle)
+                    theta_k.append(sigma_k[-1] / 2 - offset)
 
-                is_obstacle = False
+                    # Reset the flag
+                    is_obstacle = False
 
         return d_k, sigma_k, theta_k
 

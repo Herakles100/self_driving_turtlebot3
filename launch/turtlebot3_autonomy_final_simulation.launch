@@ -14,10 +14,10 @@
   <!-- Parameters for obstacle avoidance -->
   <arg name="turtlebot_width" default="0.18" />
   <arg name="max_lidar_range" default="3.5" />
-  <arg name="obstacle_distance_threshold" default="0.5" />
+  <arg name="obstacle_distance_threshold" default="0.3" />
   <arg name="theta_goal" default="0" />
   <arg name="gamma" default="5" />
-  <arg name="param_proportional_control" default="500" />
+  <arg name="param_proportional_control" default="-500" />
 
 
   <!-- Parameters for line following-->
