@@ -195,7 +195,7 @@ class NodeController:
                 self.vel_msg.linear.x = self.obstacle_avoidance_info[0]
                 self.vel_msg.angular.z = self.obstacle_avoidance_info[1]
             else:
-                self.vel_msg.linear.x = self.linear_x
+                self.vel_msg.linear.x = self.linear_x/2
                 self.vel_msg.angular.z = 0
             # self.vel_msg.linear.x = self.linear_x
             # self.vel_msg.angular.z = 0

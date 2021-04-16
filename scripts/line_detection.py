@@ -10,6 +10,10 @@ from std_msgs.msg import Float32MultiArray
 from PID_controller import PID
 
 
+# TODO: PROPERLY PRINT MASK TO SEE WHAT IS GOING WRONG
+# Use LAB color space values to generate mask
+# If we can't differentiat we can modify the LAB color space such that we can improve differentiation in HSV color space
+
 class LineFollower:
     def __init__(self):
         self.bridge_object = CvBridge()
@@ -46,9 +50,13 @@ class LineFollower:
         self.center_shift = rospy.get_param('~line_center_shift')
 
         # Init the lower bound and upper bound of the specific color
-        self.lower_HSV = np.array(eval(rospy.get_param('~lower_HSV')))
-        self.upper_HSV = np.array(eval(rospy.get_param('~upper_HSV')))
-
+        # self.lower_HSV = np.array(eval(rospy.get_param('~lower_HSV')))
+        # self.upper_HSV = np.array(eval(rospy.get_param('~upper_HSV')))
+	
+        # for LAB parametrization
+        self.lower_LAB = np.array(eval(rospy.get_param('~lower_LAB')))
+        self.upper_LAB = np.array(eval(rospy.get_param('~upper_LAB')))
+	
     def camera_callback(self, image):
         if self.work_mode == 'simulation':
             # Select bgr8 because its the OpenCV encoding by default
@@ -65,12 +73,19 @@ class LineFollower:
                            upper_bound:int(height/2) + lower_bound][:]
 
         # Convert from RGB to HSV
-        hsv = cv2.cvtColor(crop_img, cv2.COLOR_BGR2HSV)
+        #hsv = cv2.cvtColor(crop_img, cv2.COLOR_BGR2HSV)
+        
+        # Convert from RGB to LAB
+        lab = cv2.cvtColor(crop_img, cv2.COLOR_BGR2LAB)
 
         # Threshold the HSV image to get only specific colors
-        mask = cv2.inRange(hsv, self.lower_HSV, self.upper_HSV)
+        #mask = cv2.inRange(hsv, self.lower_HSV, self.upper_HSV)
+        
+        # Threshold the LAB image to get only specific colors
+        mask = cv2.inRange(lab, self.lower_LAB, self.upper_LAB) 
 
         # Find the centroid
+        cv2.imshow("Mask", mask)
         m = cv2.moments(mask, False)
         try:
             cx, cy = int(m['m10']/m['m00']), int(m['m01']/m['m00'])
