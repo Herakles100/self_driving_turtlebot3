@@ -58,38 +58,50 @@ class TurtleBot:
         # straight ahead
         fwd = self.current_distance[0]
         # forward view
-        ahead = self.current_distance[-37:-1] + self.current_distance[:37]
+        ahead = self.current_distance[-20:-1] + self.current_distance[:20]
         
         #37
         
         # Left view
-        left = self.current_distance[-self.view_range[1]:-37]
+        left = self.current_distance[-self.view_range[1]:-20]
         # Right view
-        right = self.current_distance[37:self.view_range[1]]
+        right = self.current_distance[20:self.view_range[1]]
         
-        front_right = self.current_distance[15:self.view_range[1]]
-        front_left = self.current_distance[-self.view_range[1]:-15]
+        front_right = self.current_distance[10:self.view_range[1]-10]
+        front_left = self.current_distance[-self.view_range[1]+10:-10]
+        
+        # Greater range on the higher end gives you a better search space
+        # Greater range on the lower end could confuse the robot
+        # Too great of range on the higher end can also confuse the robot
         
         # 15
         
         # Total_range = self.current_distance[-self.view_range[1]:self.view_range[1]]
         # Take average
         
-        #front_right = [x for x in front_right if x < 1]
-        #front_left = [x for x in front_left if x < 1]
+        
+        # this crops the search space so we don't consider distances that are too far ahead
+        front_right = [x for x in front_right if x < .9]
+        front_left = [x for x in front_left if x < .9]
         
         ahead_mean = np.mean(ahead)
         left_mean = np.mean(left)
         right_mean = np.mean(right)
         
-        front_right_mean = np.min(front_right)
-        front_left_mean = np.min(front_left)
+        front_right_mean = np.mean(front_right)
+        front_left_mean = np.mean(front_left)
+        
+        # Mean helps us find the larger gaps
+        # Min helps you find the gap with the farthest next obstacle and tells you how far the closest object is
+        # Max helps you find the gap with the farthest distance and tells you how far that object is
         
         
 
 
         # Pick the minimum distance in the forward view
         ahead_min = np.min(ahead)
+        left_min = np.min(left)
+        right_min = np.min(right)
         
         rospy.logwarn('--------------------------------------------')
         rospy.logwarn('Ahead: ' + str(ahead_min))
@@ -112,13 +124,22 @@ class TurtleBot:
         linear_x = K_ahead * self.linear_x
 
         # Take the below policy if not in Gazebo
+        
+        # Too high of an angular velocity will miss certain windows of opportunity
+        # .5 is too high
+        # .42 is too low
+        
+        # Too low of an angular velocity and you won't be able to perform the maneuveur
+        
         if self.work_mode != 'simulation':
-            if 0.1 < ahead_min <= 0.4:
+        
+            # Changing the higher end will make the bot decide which way to look for an opening
+            if 0.1 <= ahead_min <= 0.4 or 0.1 <= left_min <= 0.4 or 0.1 <= right_min <= 0.4:
                 if front_right_mean >= front_left_mean:
-                    angular_z = .35
+                    angular_z = .46
                     
                 else:
-                    angular_z = -.35
+                    angular_z = -.46
             elif ahead_min < 0.1:
                 linear_x = 0
 
