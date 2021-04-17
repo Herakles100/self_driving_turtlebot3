@@ -61,13 +61,13 @@ class TurtleBot:
         # straight ahead
         fwd = self.current_distance[0]
         # forward view
-        ahead = self.current_distance[-20:-1] + self.current_distance[:20]
+        ahead = self.current_distance[-self.view_range[0]:-1] + self.current_distance[:self.view_range[0]]
         
         
         # Left view
-        left = self.current_distance[-self.view_range[1]:-25]
+        left = self.current_distance[-self.view_range[1]:-self.view_range[0]]
         # Right view
-        right = self.current_distance[25:self.view_range[1]]
+        right = self.current_distance[self.view_range[0]:self.view_range[1]]
         
         front_right = self.current_distance[10:self.view_range[1]-10]
         front_left = self.current_distance[-self.view_range[1]+10:-10]

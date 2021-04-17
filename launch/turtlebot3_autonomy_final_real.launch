@@ -12,7 +12,8 @@
   <arg name="yaw_pos" default="3.14"/>
 
   <!-- View range for obstacle avoidance -->
-  <arg name="view_range" default="[30, 75]" />
+  <!-- Lower Bound was 30 -->
+  <arg name="view_range" default="[20, 75]" />
 
   <!-- PID controller parameters -->
   <arg name="Kp" default="0.2"/>
