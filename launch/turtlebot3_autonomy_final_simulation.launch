@@ -1,6 +1,7 @@
 <launch>
   <arg name="model" default="$(env TURTLEBOT3_MODEL)" doc="model type [burger, waffle, waffle_pi]"/>
   <arg name="multi_robot_name" default="" />
+  <arg name="tb3_1" default="tb3_leader"/>
 
   <!-- Work mode -->
   <arg name='work_mode' default="simulation" />
@@ -10,13 +11,17 @@
   <arg name="y_pos" default="1.6"/>
   <arg name="z_pos" default="0"/>
   <arg name="yaw_pos" default="3.14"/>
+  <arg name="tb3_1_x_pos" default="1"/>
+  <arg name="tb3_1_y_pos" default="-0.4"/>
+  <arg name="tb3_1_z_pos" default="0"/>
+  <arg name="tb3_1_yaw_pos" default="1.57"/>
 
   <!-- View range for obstacle avoidance -->
   <arg name="view_range" default="[30, 60]" />
 
   <!-- PID controller parameters -->
   <arg name="Kp" default="0.2"/>
-  <arg name="Ki" default="0.008"/>
+  <arg name="Ki" default="0.0"/>
   <arg name="Kd" default="0.2" />
 
   <!-- Line color -->
@@ -52,6 +57,19 @@
 
   <!-- Load Burger in Gazebo -->
   <node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf" args="-urdf -model turtlebot3_$(arg model) -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos) -Y $(arg yaw_pos) -param robot_description" />
+
+  <group ns = "$(arg tb3_1)">
+    <!-- Load Burger description -->
+    <param name="robot_description" command="$(find xacro)/xacro --inorder $(find aue_finals)/urdf/turtlebot3_$(arg model)_leader.urdf.xacro" />
+
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
+      <param name="publish_frequency" type="double" value="50.0" />
+      <param name="tf_prefix" value="$(arg tb3_1)" />
+    </node>
+ 
+    <!-- Load Gazebo -->   
+    <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-urdf -model $(arg tb3_1) -x $(arg tb3_1_x_pos) -y $(arg tb3_1_y_pos) -z $(arg tb3_1_z_pos) -Y $(arg tb3_1_yaw_pos) -param robot_description" />
+  </group>
 
   <!-- Obstacle Avoidance node -->
   <node pkg="aue_finals" type="obstacle_avoidance.py" name="obstacle_avoidance">
