@@ -53,11 +53,11 @@ class LineFollower:
         if self.work_mode == 'simulation':
             self.lower_HSV = np.array(eval(rospy.get_param('~lower_HSV')))
             self.upper_HSV = np.array(eval(rospy.get_param('~upper_HSV')))
-	else:
+        else:
             # for LAB parametrization
             self.lower_LAB = np.array(eval(rospy.get_param('~lower_LAB')))
             self.upper_LAB = np.array(eval(rospy.get_param('~upper_LAB')))
-	
+
     def camera_callback(self, image):
         if self.work_mode == 'simulation':
             # Select bgr8 because its the OpenCV encoding by default
@@ -72,7 +72,7 @@ class LineFollower:
         upper_bound, lower_bound = 180, 230
         crop_img = img_raw[int(height/2) +
                            upper_bound:int(height/2) + lower_bound][:]
-        
+
         if self.work_mode == 'simulation':
             # Convert from RGB to HSV
             hsv = cv2.cvtColor(crop_img, cv2.COLOR_BGR2HSV)
@@ -82,7 +82,7 @@ class LineFollower:
             # Convert from RGB to LAB
             lab = cv2.cvtColor(crop_img, cv2.COLOR_BGR2LAB)
             # Threshold the LAB image to get only specific colors
-            mask = cv2.inRange(lab, self.lower_LAB, self.upper_LAB) 
+            mask = cv2.inRange(lab, self.lower_LAB, self.upper_LAB)
 
         # Find the centroid
         cv2.imshow("Mask", mask)

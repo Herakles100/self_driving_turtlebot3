@@ -77,6 +77,7 @@ class NodeController:
         self.timer1 = 0
         self.timer2 = 0
         self.mode_timer = 0
+        self.timer_obs_avd = 0
 
         # Init mode
         self.mode = 1  # Default to obstacle avoidance and wall following
@@ -189,7 +190,7 @@ class NodeController:
             self.vel_msg.angular.z = self.obstacle_avoidance_info[1]
             if self.obstacle_avoidance_info[-2] != 0 and self.timer_obs_avd == 0:
                 self.timer_obs_avd = rospy.Time.now().to_sec()
-                
+
             elif rospy.Time.now().to_sec() - self.timer_obs_avd > self.obstacle_avoidance_info[-2]:
                 self.timer_obs_avd = 0
 
