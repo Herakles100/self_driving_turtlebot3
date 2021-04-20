@@ -22,8 +22,8 @@
 
   <!-- Line color -->
 
-  <arg name="lower_HSV" default="[20, 100, 100]" />
-  <arg name="upper_HSV" default="[50, 255, 255]" /> 
+  <!--<arg name="lower_HSV" default="[20, 50, 80]" />
+  <arg name="upper_HSV" default="[50, 255, 255]" /> -->
 <!--  
   <arg name="lower_LAB" default="[0, -10, 10]" /> 
   <arg name="upper_LAB" default="[90, 10, 100]" />  
@@ -38,10 +38,10 @@
 
 <!-- 
   <arg name="lower_LAB" default="[55, 115, 132]" />
-  <arg name="upper_LAB" default="[200, 135, 200]" /> 
+  <arg name="upper_LAB" default="[200, 135, 200]" /> -->
   <arg name="lower_HSV" default="[15, 65, 50]" />
   <arg name="upper_HSV" default="[50, 255, 200]" /> 
-  -->
+  
   <!-- Line center shift -->
   <arg name="line_center_shift" default="0" />
 
@@ -70,7 +70,7 @@
   </node>
 
   <!-- Line Detection node -->
-  <node pkg="aue_finals" type="line_detection_lab.py" name="line_detection_lab">
+  <node pkg="aue_finals" type="line_detection.py" name="line_detection">
     <param name="work_mode" value="$(arg work_mode)" />
     <param name="Kp" value="$(arg Kp)"/>
     <param name="Ki" value="$(arg Ki)"/>
