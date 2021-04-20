@@ -187,11 +187,16 @@ class NodeController:
         if self.mode == 1:
             self.vel_msg.linear.x = self.obstacle_avoidance_info[0]
             self.vel_msg.angular.z = self.obstacle_avoidance_info[1]
+            if self.obstacle_avoidance_info[-2] != 0 and self.timer_obs_avd == 0:
+                self.timer_obs_avd = rospy.Time.now().to_sec()
+                
+            elif rospy.Time.now().to_sec() - self.timer_obs_avd > self.obstacle_avoidance_info[-2]:
+                self.timer_obs_avd = 0
 
         elif self.mode == 2:
             # This is line following scenario
             # Init the default velocity
-            if self.obstacle_avoidance_info[-1] < 0.6:
+            if self.obstacle_avoidance_info[-3] < 0.6:
                 self.vel_msg.linear.x = self.obstacle_avoidance_info[0]
                 self.vel_msg.angular.z = self.obstacle_avoidance_info[1]
             else:
