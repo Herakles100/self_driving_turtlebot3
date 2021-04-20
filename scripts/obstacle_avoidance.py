@@ -5,9 +5,6 @@ from sensor_msgs.msg import LaserScan
 from std_msgs.msg import Float32MultiArray
 
 
-# TODO: IMPROVE PERFORMANCE--NOT CONSISTENT
-# Read my notes in the script for guidance
-
 class TurtleBot:
 
     def __init__(self, node_name):
@@ -61,13 +58,14 @@ class TurtleBot:
         # straight ahead
         fwd = self.current_distance[0]
         # forward view
-        ahead = self.current_distance[-self.view_range[0]:-1] + self.current_distance[:self.view_range[0]]
+        ahead = self.current_distance[-20:-1] + self.current_distance[:20]
         
+        #37
         
         # Left view
-        left = self.current_distance[-self.view_range[1]:-self.view_range[0]]
+        left = self.current_distance[-self.view_range[1]:-20]
         # Right view
-        right = self.current_distance[self.view_range[0]:self.view_range[1]]
+        right = self.current_distance[20:self.view_range[1]]
         
         front_right = self.current_distance[10:self.view_range[1]-10]
         front_left = self.current_distance[-self.view_range[1]+10:-10]
@@ -76,13 +74,15 @@ class TurtleBot:
         # Greater range on the lower end could confuse the robot
         # Too great of range on the higher end can also confuse the robot
         
+        # 15
+        
         # Total_range = self.current_distance[-self.view_range[1]:self.view_range[1]]
         # Take average
         
         
         # this crops the search space so we don't consider distances that are too far ahead
-        #front_right = [x for x in front_right if x < .9]
-        #front_left = [x for x in front_left if x < .9]
+        # front_right = [x for x in front_right if x < .9]
+        # front_left = [x for x in front_left if x < .9]
         
         ahead_mean = np.mean(ahead)
         left_mean = np.mean(left)
@@ -114,15 +114,14 @@ class TurtleBot:
         K_left = left_mean / (ahead_mean + right_mean)
         K_right = right_mean / (ahead_mean + left_mean)
         
-        K_front_right = front_right_mean / (front_left_mean)
-        K_front_left = front_left_mean / (front_right_mean)
+
         
         K_ahead = ahead_min
 
         # Checking the distance from obstacles and
         # controlling speeds accordingly
         angular_z = K_right - K_left
-        linear_x = K_ahead * self.linear_x
+        linear_x = min(K_ahead * self.linear_x, 0.1)
 
         # Take the below policy if not in Gazebo
         
@@ -135,15 +134,12 @@ class TurtleBot:
         if self.work_mode != 'simulation':
         
             # Changing the higher end will make the bot decide which way to look for an opening
-            if 0.1 <= ahead_min <= 0.6 or left_min <= 0.25 or right_min <= 0.25:
-                #angular_z = (K_front_right - K_front_left) # might multiply a constant
+            if 0.1 <= ahead_min <= 0.6 or 0.1 <= left_min <= 0.2 or 0.1 <= right_min <= 0.2:
                 if front_right_mean >= front_left_mean:
-                    angular_z = .55
-                    # .55
+                    angular_z = .50
                     
                 else:
-                    angular_z = -.55
-                #    # -.55
+                    angular_z = -.50
             elif ahead_min < 0.1:
                 linear_x = 0
 
@@ -167,4 +163,4 @@ if __name__ == '__main__':
             rate.sleep()
 
     except rospy.ROSInterruptException:
-        pass3
+        pass

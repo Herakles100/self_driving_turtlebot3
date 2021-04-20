@@ -16,16 +16,26 @@
   <arg name="view_range" default="[20, 75]" />
 
   <!-- PID controller parameters -->
-  <arg name="Kp" default="0.2"/>
-  <arg name="Ki" default="0.008"/>
+  <arg name="Kp" default="0.5"/>
+  <arg name="Ki" default="0.00"/>
   <arg name="Kd" default="0.2" />
 
   <!-- Line color -->
-  # <arg name="lower_HSV" default="[20, 100, 100]" />
-  # <arg name="upper_HSV" default="[50, 255, 255]" />
-  <arg name="lower_LAB" default="[0, -10, 10]" />
-  <arg name="upper_LAB" default="[90, 10, 100]" />
-  
+<!-- 
+  <arg name="lower_HSV" default="[20, 100, 100]" />
+  <arg name="upper_HSV" default="[50, 255, 255]" /> 
+  <arg name="lower_LAB" default="[0, -10, 10]" /> 
+  <arg name="upper_LAB" default="[90, 10, 100]" />  
+  <arg name="lower_LAB" default="[0, 118, 129]" />
+  <arg name="upper_LAB" default="[230, 138, 228]" /> 
+  <arg name="lower_LAB" default="[138, 88, 129]" />
+  <arg name="upper_LAB" default="[230, 168, 228]" />
+-->
+  <arg name="lower_LAB" default="[55, 115, 132]" />
+  <arg name="upper_LAB" default="[200, 135, 200]" />
+  <arg name="lower_HSV" default="[15, 65, 50]" />
+  <arg name="upper_HSV" default="[50, 255, 200]" /> 
+
   <!-- Line center shift -->
   <arg name="line_center_shift" default="0" />
 
@@ -33,7 +43,7 @@
   
   <!-- TODO: Change the area threshold and stop delay for the real world -->
   <arg name="area_threshold" default="3300" />
-  <arg name="stop_delay" default="18" />
+  <arg name="stop_delay" default="14" />
 
   <!-- April tag family -->
   <arg name="tag_family" default="tag36h11" />
@@ -61,6 +71,8 @@
     <param name="Kd" value="$(arg Kd)" />
     <param name="lower_LAB" value="$(arg lower_LAB)" />
     <param name="upper_LAB" value="$(arg upper_LAB)" />
+    <param name="upper_HSV" value="$(arg upper_HSV)" />
+    <param name="lower_HSV" value="$(arg lower_HSV)" />
     <param name="line_center_shift" value="$(arg line_center_shift)" />
   </node>
 

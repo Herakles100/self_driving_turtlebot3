@@ -53,11 +53,13 @@ class LineFollower:
         if self.work_mode == 'simulation':
             self.lower_HSV = np.array(eval(rospy.get_param('~lower_HSV')))
             self.upper_HSV = np.array(eval(rospy.get_param('~upper_HSV')))
-	else:
+        else:
             # for LAB parametrization
-            self.lower_LAB = np.array(eval(rospy.get_param('~lower_LAB')))
-            self.upper_LAB = np.array(eval(rospy.get_param('~upper_LAB')))
-	
+            #self.lower_LAB = np.array(eval(rospy.get_param('~lower_LAB')))
+            #self.upper_LAB = np.array(eval(rospy.get_param('~upper_LAB')))
+            self.lower_HSV = np.array(eval(rospy.get_param('~lower_HSV')))
+            self.upper_HSV = np.array(eval(rospy.get_param('~upper_HSV')))
+    
     def camera_callback(self, image):
         if self.work_mode == 'simulation':
             # Select bgr8 because its the OpenCV encoding by default
@@ -73,6 +75,12 @@ class LineFollower:
         crop_img = img_raw[int(height/2) +
                            upper_bound:int(height/2) + lower_bound][:]
         
+        #crop_img = (crop_img * 1.9).astype(np.uint8)
+        #crop_img = np.where(crop_img > 255, 255, crop_img)
+
+        cv2.imshow("Crop", crop_img)
+        cv2.waitKey(1)
+
         if self.work_mode == 'simulation':
             # Convert from RGB to HSV
             hsv = cv2.cvtColor(crop_img, cv2.COLOR_BGR2HSV)
@@ -80,13 +88,16 @@ class LineFollower:
             mask = cv2.inRange(hsv, self.lower_HSV, self.upper_HSV)
         else:
             # Convert from RGB to LAB
-            lab = cv2.cvtColor(crop_img, cv2.COLOR_BGR2LAB)
+            #lab = cv2.cvtColor(crop_img, cv2.COLOR_BGR2LAB)
             # Threshold the LAB image to get only specific colors
-            mask = cv2.inRange(lab, self.lower_LAB, self.upper_LAB) 
+            #mask = cv2.inRange(lab, self.lower_LAB, self.upper_LAB) 
+            hsv = cv2.cvtColor(crop_img, cv2.COLOR_BGR2HSV)
+            # Threshold the HSV image to get only specific colors
+            mask = cv2.inRange(hsv, self.lower_HSV, self.upper_HSV)
 
         # Find the centroid
         cv2.imshow("Mask", mask)
-        cv2.waitKey(0)
+        cv2.waitKey(1)
         m = cv2.moments(mask, False)
         try:
             cx, cy = int(m['m10']/m['m00']), int(m['m01']/m['m00'])
