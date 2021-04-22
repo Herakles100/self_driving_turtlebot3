@@ -74,16 +74,6 @@ class TurtleBot:
         # Greater range on the lower end could confuse the robot
         # Too great of range on the higher end can also confuse the robot
         
-        # 15
-        
-        # Total_range = self.current_distance[-self.view_range[1]:self.view_range[1]]
-        # Take average
-        
-        
-        # this crops the search space so we don't consider distances that are too far ahead
-        # front_right = [x for x in front_right if x < .9]
-        # front_left = [x for x in front_left if x < .9]
-        
         ahead_mean = np.mean(ahead)
         left_mean = np.mean(left)
         right_mean = np.mean(right)
@@ -94,9 +84,6 @@ class TurtleBot:
         # Mean helps us find the larger gaps
         # Min helps you find the gap with the farthest next obstacle and tells you how far the closest object is
         # Max helps you find the gap with the farthest distance and tells you how far that object is
-        
-        
-
 
         # Pick the minimum distance in the forward view
         ahead_min = np.min(ahead)
@@ -112,10 +99,7 @@ class TurtleBot:
 
         # Setting up the Proportional gain values
         K_left = left_mean / (ahead_mean + right_mean)
-        K_right = right_mean / (ahead_mean + left_mean)
-        
-
-        
+        K_right = right_mean / (ahead_mean + left_mean)       
         K_ahead = ahead_min
 
         # Checking the distance from obstacles and
