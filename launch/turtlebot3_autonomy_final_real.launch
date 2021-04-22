@@ -11,8 +11,7 @@
   <arg name="z_pos" default="0"/>
   <arg name="yaw_pos" default="3.14"/>
 
-  <!-- View range for obstacle avoidance -->
-  <!-- Lower Bound was 30 -->
+  <!-- View range for obstacle avoidance in real world-->
   <arg name="view_range" default="[20, 75]" />
 
   <!-- PID controller parameters -->
@@ -21,33 +20,17 @@
   <arg name="Kd" default="0.2" />
 
   <!-- Line color -->
-
-  <!--<arg name="lower_HSV" default="[20, 50, 80]" />
-  <arg name="upper_HSV" default="[50, 255, 255]" /> -->
-<!--  
-  <arg name="lower_LAB" default="[0, -10, 10]" /> 
-  <arg name="upper_LAB" default="[90, 10, 100]" />  
-  <arg name="lower_LAB" default="[0, 118, 129]" />
-  <arg name="upper_LAB" default="[230, 138, 228]" /> 
-    -->
- 
-  <arg name="lower_LAB" default="[76, 88, 129]" />  <!--138/73new L -->
+  <arg name="lower_LAB" default="[76, 88, 129]" />
   <arg name="upper_LAB" default="[230, 168, 228]" /> 
-  <arg name="upper_LAB_d" default="[76, 88, 129]" /> <!--178,128,140 line begin-->
+  <arg name="upper_LAB_d" default="[76, 88, 129]" />
   <arg name="lower_LAB_d" default="[230, 168, 228]" />
-
-<!-- 
-  <arg name="lower_LAB" default="[55, 115, 132]" />
-  <arg name="upper_LAB" default="[200, 135, 200]" /> -->
   <arg name="lower_HSV" default="[15, 65, 50]" />
   <arg name="upper_HSV" default="[50, 255, 200]" /> 
   
   <!-- Line center shift -->
   <arg name="line_center_shift" default="0" />
 
-  <!-- Stop sign threshold -->
-  
-  <!-- TODO: Change the area threshold and stop delay for the real world -->
+  <!-- Stop sign threshold- Parameters for Stop sign detection -->
   <arg name="area_threshold" default="3300" />
   <arg name="stop_delay" default="14" />
 
@@ -60,7 +43,6 @@
 
   <!-- Load Burger description -->
   <param name="robot_description" command="$(find xacro)/xacro --inorder $(find turtlebot3_description)/urdf/turtlebot3_$(arg model).urdf.xacro" />
-
 
   <!-- Obstacle Avoidance node -->
   <node pkg="aue_finals" type="obstacle_avoidance.py" name="obstacle_avoidance">

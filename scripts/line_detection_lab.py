@@ -9,8 +9,6 @@ from std_msgs.msg import Float32MultiArray
 
 from PID_controller import PID
 
-
-# TODO: PROPERLY PRINT MASK TO SEE WHAT IS GOING WRONG
 # Use LAB color space values to generate mask
 # If we can't differentiat we can modify the LAB color space such that we can improve differentiation in HSV color space
 

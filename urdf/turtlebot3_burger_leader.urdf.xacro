@@ -197,7 +197,7 @@
   <joint name="tag_joint" type="fixed">
     <parent link="base_link"/>
     <child link="Apriltag36_11_00000_link"/>
-    <origin xyz="-0.1 0 0.1" rpy="0 0 0"/>
+    <origin xyz="-0.12 0 0.1" rpy="0 0 0"/>
   </joint>
 
   <link name="Apriltag36_11_00000_link">

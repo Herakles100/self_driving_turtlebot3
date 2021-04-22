@@ -11,8 +11,8 @@
   <arg name="y_pos" default="1.6"/>
   <arg name="z_pos" default="0"/>
   <arg name="yaw_pos" default="3.14"/>
-  <arg name="tb3_1_x_pos" default="1"/>
-  <arg name="tb3_1_y_pos" default="-0.4"/>
+  <arg name="tb3_1_x_pos" default="1.45"/>
+  <arg name="tb3_1_y_pos" default="0.6"/>
   <arg name="tb3_1_z_pos" default="0"/>
   <arg name="tb3_1_yaw_pos" default="1.57"/>
 
