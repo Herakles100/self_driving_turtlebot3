@@ -246,6 +246,7 @@ class NodeController:
                 self.vel_msg.angular.z = self.apriltag_info[5]
                 self.last_tag_dir = self.apriltag_info[6]/abs(self.apriltag_info[6])
             else:
+                # Turn in direction where tag was last seen before going out of frame
                 self.vel_msg.linear.x = 0
                 if self.last_tag_dir > 0: # tag went right
                     self.vel_msg.angular.z = -0.05
