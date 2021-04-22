@@ -9,6 +9,9 @@ from std_msgs.msg import Float32MultiArray
 
 from PID_controller import PID
 
+# Use LAB color space values to generate mask
+# If we can't differentiat we can modify the LAB color space such that we can improve differentiation in HSV color space
+
 class LineFollower:
     def __init__(self):
         self.bridge_object = CvBridge()
@@ -49,9 +52,10 @@ class LineFollower:
             self.lower_HSV = np.array(eval(rospy.get_param('~lower_HSV')))
             self.upper_HSV = np.array(eval(rospy.get_param('~upper_HSV')))
         else:
-            self.lower_HSV = np.array(eval(rospy.get_param('~lower_HSV')))
-            self.upper_HSV = np.array(eval(rospy.get_param('~upper_HSV')))
-    
+            # for LAB parametrization
+            self.lower_LAB = np.array(eval(rospy.get_param('~lower_LAB')))
+            self.upper_LAB = np.array(eval(rospy.get_param('~upper_LAB')))
+
     def camera_callback(self, image):
         if self.work_mode == 'simulation':
             # Select bgr8 because its the OpenCV encoding by default
@@ -79,10 +83,10 @@ class LineFollower:
             # Threshold the HSV image to get only specific colors
             mask = cv2.inRange(hsv, self.lower_HSV, self.upper_HSV)
         else:
-            # Convert from RGB to HSV
-            hsv = cv2.cvtColor(crop_img, cv2.COLOR_BGR2HSV)
-            # Threshold the HSV image to get only specific colors
-            mask = cv2.inRange(hsv, self.lower_HSV, self.upper_HSV)
+            # Convert from RGB to LAB
+            lab = cv2.cvtColor(crop_img, cv2.COLOR_BGR2LAB)
+            # Threshold the LAB image to get only specific colors
+            mask = cv2.inRange(lab, self.lower_LAB, self.upper_LAB) 
 
         # Find the centroid
         cv2.imshow("Mask", mask)

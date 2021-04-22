@@ -87,13 +87,13 @@ class TagFollower:
             error_x = cx - width / 2
             angular_z = error_x / -2000
 
-            if largest_area < self.area_threshold and abs(angular_z) < 0.05:
+            if largest_area < self.area_threshold:
                 linear_x = self.default_linear_x
             else:
                 linear_x = 0
 
             # Create the msg to publish
-            self.tag_follow_msg.data = [x1, y1, x2, y2, linear_x, angular_z]
+            self.tag_follow_msg.data = [x1, y1, x2, y2, linear_x, angular_z, error_x]
         else:
             # Update the msg
             self.tag_follow_msg.data = []

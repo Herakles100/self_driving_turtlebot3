@@ -11,24 +11,28 @@
   <arg name="z_pos" default="0"/>
   <arg name="yaw_pos" default="3.14"/>
 
-  <!-- View range for obstacle avoidance -->
-  <arg name="view_range" default="[30, 75]" />
+  <!-- View range for obstacle avoidance in real world-->
+  <arg name="view_range" default="[20, 75]" />
 
   <!-- PID controller parameters -->
-  <arg name="Kp" default="0.2"/>
-  <arg name="Ki" default="0"/>
+  <arg name="Kp" default="0.5"/>
+  <arg name="Ki" default="0.00"/>
   <arg name="Kd" default="0.2" />
 
   <!-- Line color -->
-  <arg name="lower_HSV" default="[20, 100, 100]" />
-  <arg name="upper_HSV" default="[50, 255, 255]" />
-
+  <arg name="lower_LAB" default="[76, 88, 129]" />
+  <arg name="upper_LAB" default="[230, 168, 228]" /> 
+  <arg name="upper_LAB_d" default="[76, 88, 129]" />
+  <arg name="lower_LAB_d" default="[230, 168, 228]" />
+  <arg name="lower_HSV" default="[15, 65, 50]" />
+  <arg name="upper_HSV" default="[50, 255, 200]" /> 
+  
   <!-- Line center shift -->
   <arg name="line_center_shift" default="0" />
 
-  <!-- Stop sign threshold -->
+  <!-- Stop sign threshold- Parameters for Stop sign detection -->
   <arg name="area_threshold" default="3300" />
-  <arg name="stop_delay" default="18" />
+  <arg name="stop_delay" default="14" />
 
   <!-- April tag family -->
   <arg name="tag_family" default="tag36h11" />
@@ -39,7 +43,6 @@
 
   <!-- Load Burger description -->
   <param name="robot_description" command="$(find xacro)/xacro --inorder $(find turtlebot3_description)/urdf/turtlebot3_$(arg model).urdf.xacro" />
-
 
   <!-- Obstacle Avoidance node -->
   <node pkg="aue_finals" type="obstacle_avoidance.py" name="obstacle_avoidance">
@@ -54,8 +57,12 @@
     <param name="Kp" value="$(arg Kp)"/>
     <param name="Ki" value="$(arg Ki)"/>
     <param name="Kd" value="$(arg Kd)" />
-    <param name="lower_HSV" value="$(arg lower_HSV)" />
+    <param name="lower_LAB" value="$(arg lower_LAB)" />
+    <param name="upper_LAB" value="$(arg upper_LAB)" />
+    <param name="lower_LAB_d" value="$(arg lower_LAB_d)" />
+    <param name="upper_LAB_d" value="$(arg upper_LAB_d)" />
     <param name="upper_HSV" value="$(arg upper_HSV)" />
+    <param name="lower_HSV" value="$(arg lower_HSV)" />
     <param name="line_center_shift" value="$(arg line_center_shift)" />
   </node>
 

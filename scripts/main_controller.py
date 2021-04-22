@@ -87,6 +87,8 @@ class NodeController:
         # Init the threshold of transition
         self.transition_threshold = 1
 
+        self.timer_obs_avd = 0
+
         # Init modes
         self.modes = {
             1: 'obstacle avoidance',
@@ -105,7 +107,7 @@ class NodeController:
             return
         if self.apriltag_info:
             self.mode = 3  # tag following
-            self.transition_threshold = 10
+            self.transition_threshold = 20
             return
 
         # if no mode being published, default to obstacle and wall mode
@@ -187,15 +189,20 @@ class NodeController:
         if self.mode == 1:
             self.vel_msg.linear.x = self.obstacle_avoidance_info[0]
             self.vel_msg.angular.z = self.obstacle_avoidance_info[1]
+            if self.obstacle_avoidance_info[-2] != 0 and self.timer_obs_avd == 0:
+                self.timer_obs_avd = rospy.Time.now().to_sec()
+               
+            elif rospy.Time.now().to_sec() - self.timer_obs_avd > self.obstacle_avoidance_info[-2]:
+                self.timer_obs_avd = 0
 
         elif self.mode == 2:
             # This is line following scenario
             # Init the default velocity
-            if self.obstacle_avoidance_info[-1] < 0.6:
-                self.vel_msg.linear.x = self.obstacle_avoidance_info[0]
+            if self.obstacle_avoidance_info[-3] < 0.6:
+                self.vel_msg.linear.x = min(self.obstacle_avoidance_info[0],0.05)
                 self.vel_msg.angular.z = self.obstacle_avoidance_info[1]
             else:
-                self.vel_msg.linear.x = self.linear_x
+                self.vel_msg.linear.x = self.linear_x/2
                 self.vel_msg.angular.z = 0
             # self.vel_msg.linear.x = self.linear_x
             # self.vel_msg.angular.z = 0
@@ -237,9 +244,14 @@ class NodeController:
                 # Get the linear and angular velocity publushed by apriltag-follower node
                 self.vel_msg.linear.x = self.apriltag_info[4]
                 self.vel_msg.angular.z = self.apriltag_info[5]
+                self.last_tag_dir = self.apriltag_info[6]/abs(self.apriltag_info[6])
             else:
+                # Turn in direction where tag was last seen before going out of frame
                 self.vel_msg.linear.x = 0
-                self.vel_msg.angular.z = -0.2
+                if self.last_tag_dir > 0: # tag went right
+                    self.vel_msg.angular.z = -0.05
+                else:
+                    self.vel_msg.angular.z = 0.05
 
         # Print velocity information on the camera video
         cv_image = cv2.putText(cv_image, 'Vel (x, z): ' + str(round(self.vel_msg.linear.x, 2)) + ',',
