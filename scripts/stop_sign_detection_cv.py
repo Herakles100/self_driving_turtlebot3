@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 # Import libraries
 import os
@@ -17,7 +17,7 @@ base_path = os.path.dirname(os.path.abspath(__file__))
 
 class StopSignDetection:
     """
-    Stop Sign Detection class for detecting stop sign using OpenCV
+    Stop Sign Detection class for detecting stop sign using CV
     """
 
     def __init__(self, node_name):
