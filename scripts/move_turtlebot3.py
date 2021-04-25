@@ -15,17 +15,21 @@ class MoveTurtleBot3:
         Init function for MoveTurtleBot3 class
         """
 
+        # Publisher to publish velocity data to the topic '/cmd_vel'
         self.cmd_vel_pub = rospy.Publisher(
             '/cmd_vel', Twist, queue_size=10
         )
 
+        # Subscriber to get velocity data from the topic '/cmd_vel'
         self.cmd_vel_subs = rospy.Subscriber(
             '/cmd_vel', Twist, self.cmdvel_callback
         )
 
+        # Init Twist message for last cmd_vel
         self.last_cmdvel_command = Twist()
 
-        self._cmdvel_pub_rate = rospy.Rate(10)
+        # Init the publish rate
+        self.cmd_vel_pub_rate = rospy.Rate(10)
 
 
     def cmdvel_callback(self, msg):
@@ -66,7 +70,7 @@ class MoveTurtleBot3:
         current_equal_to_new = False
         while not current_equal_to_new:
             self.cmd_vel_pub.publish(twist_object)
-            self._cmdvel_pub_rate.sleep()
+            self.cmd_vel_pub_rate.sleep()
             current_equal_to_new = \
                 self.compare_twist_commands(
                     twist1=self.last_cmdvel_command,
