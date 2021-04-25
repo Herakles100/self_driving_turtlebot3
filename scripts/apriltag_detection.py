@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 
 # Import libraries
 import cv2
@@ -52,7 +51,8 @@ class TagFollower:
         # Publisher to publish data for april tag following to
         # the topic '/apriltag_following'
         self.tag_follow_pub = rospy.Publisher(
-            "/apriltag_following", Float32MultiArray, queue_size=10)
+            "/apriltag_following", Float32MultiArray, queue_size=10
+        )
 
         # Init threshold of april tag area
         self.area_threshold = rospy.get_param('~tag_area_threshold')
@@ -80,7 +80,8 @@ class TagFollower:
         if self.work_mode == 'simulation':
             # Select bgr8 because its the OpenCV encoding by default
             img_raw = self.bridge_object.imgmsg_to_cv2(
-                image, desired_encoding="bgr8")
+                image, desired_encoding="bgr8"
+            )
         else:
             cv_np_arr = np.frombuffer(image.data, np.uint8)
             img_raw = cv2.imdecode(cv_np_arr, cv2.IMREAD_COLOR)
@@ -135,7 +136,7 @@ class TagFollower:
             # Update the msg
             self.tag_follow_msg.data = []
 
-        # Publish the velocity data to /tag_follow_instruction
+        # Publish the data to '/apriltag_following'
         self.tag_follow_pub.publish(self.tag_follow_msg)
         self.rate.sleep()
 
