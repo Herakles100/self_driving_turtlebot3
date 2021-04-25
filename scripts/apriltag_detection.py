@@ -34,7 +34,7 @@ class TagFollower:
 
         if self.work_mode == 'simulation':
             # Subscriber which will get images from the topic
-            # 'camera/rgb/image_raw'
+            # '/camera/rgb/image_raw'
             self.image_sub = rospy.Subscriber(
                 "/camera/rgb/image_raw",
                 Image,
