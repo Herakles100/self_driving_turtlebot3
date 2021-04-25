@@ -161,7 +161,7 @@ class ObstacleAvoidance:
 
 def main():
     try:
-        obstacle_avoidance_object = TurtleBot(
+        obstacle_avoidance_object = ObstacleAvoidance(
             node_name='obstacle_avoidance_node')
         rate = rospy.Rate(10)
         ctrl_c = False
