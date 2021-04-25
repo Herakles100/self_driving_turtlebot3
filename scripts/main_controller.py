@@ -10,7 +10,7 @@ from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import CompressedImage
 from std_msgs.msg import Float32MultiArray
-from move_TurtleBot3 import MoveTurtleBot3
+from move_turtlebot3 import MoveTurtleBot3
 
 
 class NodeController:
