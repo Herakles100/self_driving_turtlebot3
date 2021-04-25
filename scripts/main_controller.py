@@ -7,8 +7,7 @@ import rospy
 
 from cv_bridge import CvBridge
 from geometry_msgs.msg import Twist
-from sensor_msgs.msg import Image
-from sensor_msgs.msg import CompressedImage
+from sensor_msgs.msg import Image, CompressedImage
 from std_msgs.msg import Float32MultiArray
 from move_turtlebot3 import MoveTurtleBot3
 
@@ -34,42 +33,48 @@ class NodeController:
         self.work_mode = rospy.get_param('~work_mode')
 
         if self.work_mode == 'simulation':
-            # Subscriber which will get images from the topic '/camera/rgb/image_raw'
+            # Subscriber which will get images from the topic
+            # '/camera/rgb/image_raw'
             self.image_sub = rospy.Subscriber(
                 "/camera/rgb/image_raw",
                 Image,
                 self.camera_callback
             )
         else:
-            # Subscriber which will get images from the topic '/raspicam_node/image/compressed'
+            # Subscriber which will get images from the topic
+            # '/raspicam_node/image/compressed'
             self.image_sub = rospy.Subscriber(
                 "/raspicam_node/image/compressed",
                 CompressedImage,
                 self.camera_callback
             )
 
-        # Subscriber which will get obstacle avoidance decision from the topic '/obstacle_avoidance'
+        # Subscriber which will get obstacle avoidance decision
+        # from the topic '/obstacle_avoidance'
         self.obstacle_avoidance_sub = rospy.Subscriber(
             "/obstacle_avoidance",
             Float32MultiArray,
             self.get_obstacle_avoidance_info
         )
 
-        # Subscriber which will get angular velocity from the topic '/line_following' for line following
+        # Subscriber which will get angular velocity from the topic
+        # '/line_following' for line following
         self.line_following_sub = rospy.Subscriber(
             "/line_following",
             Float32MultiArray,
             self.get_line_info
         )
 
-        # Subscriber which will get information of stop sign from the topic '/stop_sign'
+        # Subscriber which will get information of stop sign from the
+        # topic '/stop_sign'
         self.stop_sign_sub = rospy.Subscriber(
             "/stop_sign",
             Float32MultiArray,
             self.get_stop_sign_info
         )
 
-        # Subscriber which will get information of apriltag from the topic '/apriltag_following'
+        # Subscriber which will get information of apriltag from the
+        # topic '/apriltag_following'
         self.apriltag_sub = rospy.Subscriber(
             "/apriltag_following",
             Float32MultiArray,
@@ -228,8 +233,8 @@ class NodeController:
         """
         Function for camera callback that is called everytime data is
         published to the camera topic ('/camera/rgb/image_raw' for
-        simulated run and '/raspicam_node/image/compressed' for real-life
-        run.
+        simulated run and '/raspicam_node/image/compressed' for real
+        world run.
         """
         # Threshold of transition
         if self.mode_timer == 0:
