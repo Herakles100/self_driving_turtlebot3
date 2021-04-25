@@ -55,7 +55,7 @@ class MoveTurtleBot3:
 
         if not equal:
             rospy.logwarn(
-                "The Current Twist is not the same as the one sent,"
+                "The Current Twist is not the same as the one sent, "
                 "Resending"
             )
         return equal
