@@ -1,20 +1,28 @@
 #!/usr/bin/env python3
+
+# Import libraries
 import time
 
 
 class PID:
+    """
+    PID class
+    """
+
     def __init__(self, Kp, Ki, Kd):
         """
-            Parameters
-            -----------
-            Kp: float
-                The proportional gain.
-            Ki: float
-                The integral gain.
-            Kd: float
-                The derivative gain.
-            origin_time: float
-                The origin time.
+        Inut function for PID class
+
+        Parameters
+        -----------
+        Kp: float
+            The proportional gain.
+        Ki: float
+            The integral gain.
+        Kd: float
+            The derivative gain.
+        origin_time: float
+            The origin time.
         """
         self.Kp = Kp
         self.Ki = Ki
@@ -29,14 +37,15 @@ class PID:
         self.previous_time = self.origin_time
         self.previous_error = 0.0
 
+
     def update(self, error):
         """
-            Update the PID loop with nonuniform time step size.
+        Update the PID loop with nonuniform time step size.
 
-            Parameters
-            -----------
-            error: float
-                Error since last call (state - target).
+        Parameters
+        -----------
+        error: float
+            Error since last call (state - target).
         """
         current_time = time.time()
 
