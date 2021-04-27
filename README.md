@@ -8,7 +8,11 @@ We are Team-2 of AuE893 Autonomy Science and Systems (Spring 2021). Our team con
 
 ## Experiment Results
 
-- ..
+- Simulation in Gazebo
+  ![Visualisation](./gifs/final_project_gazebo.gif)
+
+- Result in Real World
+  ![Visualisation](./gifs/final_project_real-world.gif)
 
 ## Getting started
 
@@ -20,7 +24,10 @@ We are Team-2 of AuE893 Autonomy Science and Systems (Spring 2021). Our team con
 - TurtleBot3 packages
 - TurtleBot3 Burger
 - Python3
+- OpenCV
+- Apriltag
 - git
+- TensorFlow 2.x
 
 ### Clone the project
 
@@ -44,9 +51,28 @@ $ cd ~/catkin_ws/src/aue_finals/src/scripts
 $ chmod u+x *.py
 ```
 
-### 1) Run ..
+### Part I: Run Project in Gazebo
 
+```bash
+$ roslaunch aue_finals turtlebot3_autonomy_final_simulation.launch
+```
 
-## Notes
+### Part II: Run Project in Real-World
 
-The..
+- Run roscore on Remote PC
+
+  ```bash
+  $ roscore
+  ```
+
+- Bring up TurtleBot3 Burger
+
+  ```bash
+  $ ssh ubuntu@{IP_ADDRESS_OF_RASPBERRY_PI}
+  $ roslaunch turtlebot3_bringup turtlebot3_robot.launch
+  ```
+
+- Run project code
+  ```bash
+  $ roslaunch aue_finals turtlebot3_autonomy_final_real.launch
+  ```
