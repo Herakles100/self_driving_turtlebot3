@@ -40,7 +40,7 @@
   <arg name="tag_area_threshold" default="10000" />
 
   <!-- Default linear speed -->
-  <arg name="linear_x" default="0.05"/>
+  <arg name="linear_x" default="0.1"/>
 
   <!-- Load world -->
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
