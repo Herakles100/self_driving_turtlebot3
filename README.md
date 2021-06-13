@@ -1,4 +1,4 @@
-# ASelf Driving Turtlbot3 Project
+# Self Driving Turtlbot3 Project
 
 ## About Us
 
