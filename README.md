@@ -1,6 +1,4 @@
-# AuE893 Autonomy Science and Systems (Spring 2021): Team 2 - Final Project
-
-This project contains all our files for Final Project Submission
+# ASelf Driving Turtlbot3 Project
 
 ## About Us
 
